@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Briefcase,
   FolderGit2,
+  Download,
 } from "lucide-react";
 import { Link } from "react-router";
 import { ImageWithFallback } from "../components/media/ImageWithFallback";
@@ -262,6 +263,13 @@ export function NormalPortfolio() {
                   className="flex items-center gap-2 font-bold border-2 border-black px-3 py-1.5 bg-[#FFC900] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-sm"
                 >
                   <Globe className="w-4 h-4" /> Website
+                </a>
+                <a
+                  href="/Dhruv_Bhagatkar_Resume.pdf"
+                  download
+                  className="flex items-center gap-2 font-bold border-2 border-black px-3 py-1.5 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-sm group text-black"
+                >
+                  <Download className="w-4 h-4 group-hover:block transition-all" /> Download Resume
                 </a>
               </div>
             </div>

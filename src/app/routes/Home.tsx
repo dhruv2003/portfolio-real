@@ -24,10 +24,13 @@ export function Home() {
             Dhruv bhagatkar
           </div>
           <nav className="flex items-center gap-4 sm:gap-6 shrink-0">
-            <Link to="/normal" className="hidden sm:block font-bold uppercase tracking-wider text-black hover:bg-[#FF90E8] px-3 py-1 border-2 border-transparent hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">Resume</Link>
-            <Link to="/chat" className="font-bold text-sm sm:text-base uppercase tracking-wider bg-[#38BDF8] px-3 sm:px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all inline-flex items-center gap-2 group whitespace-nowrap">
-              <Terminal className="w-4 h-4 shrink-0" />
+            <Link to="/chat" className="hidden sm:inline-flex items-center gap-2 font-bold uppercase tracking-wider text-black hover:bg-[#FF90E8] px-3 py-1 border-2 border-transparent hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group whitespace-nowrap">
+              <Terminal className="w-4 h-4 shrink-0 group-hover:rotate-12 transition-transform" />
               Chat
+            </Link>
+            <Link to="/normal" className="font-bold text-sm sm:text-base uppercase tracking-wider bg-[#38BDF8] px-3 sm:px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all inline-flex items-center gap-2 group whitespace-nowrap">
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              Resume
             </Link>
           </nav>
         </div>

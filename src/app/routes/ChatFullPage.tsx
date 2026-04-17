@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
 import ReactMarkdown from 'react-markdown';
+import { detectMaliciousInput, validateMessageLength, RateLimiter } from '../../utils/security';
 
 interface Message {
   id: string;
@@ -31,6 +32,7 @@ export function ChatFullPage() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const rateLimiterRef = useRef(new RateLimiter(10, 60000));
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,6 +44,35 @@ export function ChatFullPage() {
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
+
+    // --- FRONTEND GUARDRAILS ---
+    const lengthCheck = validateMessageLength(input);
+    if (!lengthCheck.valid) {
+      const userMsg: Message = { id: Date.now().toString(), text: input, sender: 'user', timestamp: new Date() };
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: lengthCheck.error || "Message invalid.", sender: 'ai', timestamp: new Date() };
+      setMessages(prev => [...prev, userMsg, botMsg]);
+      setInput('');
+      return;
+    }
+
+    const secCheck = detectMaliciousInput(input);
+    if (!secCheck.isSafe) {
+      const userMsg: Message = { id: Date.now().toString(), text: input, sender: 'user', timestamp: new Date() };
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: secCheck.roastResponse || "Malicious input detected.", sender: 'ai', timestamp: new Date() };
+      setMessages(prev => [...prev, userMsg, botMsg]);
+      setInput('');
+      return;
+    }
+
+    const rlCheck = rateLimiterRef.current.attempt();
+    if (!rlCheck.allowed) {
+      const userMsg: Message = { id: Date.now().toString(), text: input, sender: 'user', timestamp: new Date() };
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: "Whoa there, speedster! 🏎️ You're sending messages too fast. Take a breath and try again in a minute.", sender: 'ai', timestamp: new Date() };
+      setMessages(prev => [...prev, userMsg, botMsg]);
+      setInput('');
+      return;
+    }
+    // ---------------------------
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -75,24 +106,33 @@ export function ChatFullPage() {
         })
       });
 
-      if (!response.ok) {
-        throw new Error('API request failed');
+      let data;
+      const isJson = response.headers.get('content-type')?.includes('application/json');
+      if (isJson) {
+        data = await response.json();
       }
-      
-      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.answer || data?.message || 'API request failed');
+      }
       
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.answer || "I'm sorry, I couldn't generate a response.",
+        text: data?.answer || "I'm sorry, I couldn't generate a response.",
         sender: 'ai',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiResponse]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat error:', error);
+      const isNetworkError = error.message === 'API request failed' || error.message.includes('Failed to fetch') || error.message.includes('not set');
+      const textToDisplay = isNetworkError 
+        ? "Error: Unable to connect to the terminal API. Please check if VITE_API_URL is set correctly in your .env file."
+        : error.message;
+
       const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Error: Unable to connect to the terminal API. Please check if VITE_API_URL is set correctly in your .env file.",
+        text: textToDisplay,
         sender: 'ai',
         timestamp: new Date()
       };
