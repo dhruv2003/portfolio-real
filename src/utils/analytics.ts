@@ -31,3 +31,11 @@ export const trackPageView = (path: string) => {
     });
   }
 };
+
+export const trackEvent = (eventName: string, eventParams: Record<string, string | number | boolean> = {}) => {
+  // @ts-ignore
+  if (typeof window !== "undefined" && window.gtag) {
+    // @ts-ignore
+    window.gtag("event", eventName, eventParams);
+  }
+};

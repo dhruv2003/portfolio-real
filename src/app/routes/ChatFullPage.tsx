@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
+import { trackEvent } from "../../utils/analytics";
 import ReactMarkdown from 'react-markdown';
 import { detectMaliciousInput, validateMessageLength, RateLimiter } from '../../utils/security';
 
@@ -86,6 +87,8 @@ export function ChatFullPage() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+    
+    trackEvent("chat_sent");
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL;

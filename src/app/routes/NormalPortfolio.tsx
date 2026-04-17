@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 import { ImageWithFallback } from "../components/media/ImageWithFallback";
+import { trackEvent } from "../../utils/analytics";
 
 export function NormalPortfolio() {
   useEffect(() => {
@@ -236,6 +237,7 @@ export function NormalPortfolio() {
               <div className="flex flex-wrap gap-3 mt-6">
                 <a
                   href={`mailto:${data.contact.email}`}
+                  onClick={() => trackEvent("social_click", { network: "Email" })}
                   className="flex items-center gap-2 font-bold border-2 border-black px-3 py-1.5 bg-[#FF90E8] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-sm"
                 >
                   <Mail className="w-4 h-4" /> Email
@@ -244,6 +246,7 @@ export function NormalPortfolio() {
                   href={data.contact.github}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => trackEvent("social_click", { network: "GitHub" })}
                   className="flex items-center gap-2 font-bold border-2 border-black px-3 py-1.5 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-sm"
                 >
                   <Github className="w-4 h-4" /> GitHub
@@ -252,6 +255,7 @@ export function NormalPortfolio() {
                   href={data.contact.linkedin}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => trackEvent("social_click", { network: "LinkedIn" })}
                   className="flex items-center gap-2 font-bold border-2 border-black px-3 py-1.5 bg-[#38BDF8] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-sm"
                 >
                   <Linkedin className="w-4 h-4" /> LinkedIn
@@ -260,6 +264,7 @@ export function NormalPortfolio() {
                   href={data.contact.website}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => trackEvent("social_click", { network: "Website" })}
                   className="flex items-center gap-2 font-bold border-2 border-black px-3 py-1.5 bg-[#FFC900] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-sm"
                 >
                   <Globe className="w-4 h-4" /> Website
@@ -267,6 +272,7 @@ export function NormalPortfolio() {
                 <a
                   href="/Dhruv_Bhagatkar_Resume.pdf"
                   download
+                  onClick={() => trackEvent("download_resume")}
                   className="flex items-center gap-2 font-bold border-2 border-black px-3 py-1.5 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-sm group text-black"
                 >
                   <Download className="w-4 h-4 group-hover:block transition-all" /> Download Resume
