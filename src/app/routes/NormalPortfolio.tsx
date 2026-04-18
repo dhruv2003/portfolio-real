@@ -128,6 +128,8 @@ export function NormalPortfolio() {
         "Bash Scripting",
         "Java",
         "Python",
+        "Solidity",
+        "TypeScript",
       ],
       devops_tools: [
         "Kubernetes",
@@ -136,6 +138,7 @@ export function NormalPortfolio() {
         "Git",
         "Gradle",
         "JNDI",
+        "Hardhat",
       ],
       databases: ["Oracle DB (connectivity across hosts)"],
       cloud_platforms: [
@@ -157,6 +160,7 @@ export function NormalPortfolio() {
       ],
       emerging_tech: [
         "AI/ML (OpenAI API, Claude, Codex capabilities, token cost awareness)",
+        "Blockchain & Web3 (Smart Contracts, Tokenomics)",
       ],
     },
   };

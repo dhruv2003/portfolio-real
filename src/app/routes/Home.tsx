@@ -73,9 +73,7 @@ export function Home() {
           </motion.div>
           
           <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -150, right: 150, top: -300, bottom: 200 }} onDragEnd={() => trackEvent("hero_drag", { object: "blue_square" })} className="absolute bottom-32 sm:bottom-40 right-4 sm:right-[20%] w-16 h-16 sm:w-32 sm:h-32 bg-[#38BDF8] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:rotate-45 transition-transform duration-700 cursor-grab active:cursor-grabbing rotate-12 z-0" />
-          
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -100, right: 200, top: -400, bottom: 300 }} onDragEnd={() => trackEvent("hero_drag", { object: "pink_circle" })} className="absolute top-32 sm:top-60 right-1/4 sm:right-[35%] w-12 h-12 sm:w-20 sm:h-20 bg-[#FF90E8] border-4 border-black rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-grab active:cursor-grabbing z-0" />
-          
+
           <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -50, right: 300, top: -100, bottom: 400 }} className="absolute top-24 sm:top-40 left-4 sm:left-[10%] w-8 h-8 sm:w-12 sm:h-12 bg-black rotate-45 cursor-grab active:cursor-grabbing z-0" />
           
           <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -50, right: 300, top: -400, bottom: 200 }} className="absolute bottom-40 sm:bottom-60 left-8 sm:left-[5%] w-10 h-10 sm:w-16 sm:h-16 border-[4px] sm:border-8 border-black rounded-full cursor-grab active:cursor-grabbing z-0" />
