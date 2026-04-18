@@ -27,7 +27,7 @@ export function NormalPortfolio() {
     name: "Dhruv Bhagatkar",
     title: "Associate Consultant, DevOps Engineer",
     summary:
-      "I am an Associate Consultant at Oracle Financial Services Software. I have strong exposure to DevOps practices, backend development, and production support for enterprise systems. Rather than calling myself an expert, I consider myself a continuous learner—constantly exploring system design, building scalable architectures, and diving deep into backend engineering. My technical focus spans across Oracle technologies, Kubernetes, and robust automation.",
+      "I am an Associate Consultant at Oracle Financial Services Software. I have strong exposure to DevOps practices, backend development, and production support for enterprise systems. Rather than calling myself an expert, I consider myself a continuous learner constantly exploring system design, building scalable architectures, and diving deep into backend engineering. My technical focus spans across Oracle technologies, Kubernetes, and robust automation.",
     contact: {
       email: "bhagatkardhruv2003@gmail.com",
       phone: "+91-9867229860",
