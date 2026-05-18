@@ -54,6 +54,7 @@ export function NormalPortfolio() {
           "Work as a backend and platform engineer on enterprise banking systems, with strong focus on authentication architecture, platform integrations, production tooling, and operational reliability.",
         details: [
           "Architect and build an enterprise SSO/SAML authentication application from scratch, including gateway flows, backend auth logic, token handling, redirects, validation behavior, and error handling.",
+          "Reduced FCUB’s BLOB log size by 6x and lowered CPU usage by more than 20% in production by implementing structured JSON logging, significantly cutting disk consumption.",
           "Work on backend and platform integrations across Oracle banking environments, including FCUBS and Oracle WebLogic-based systems.",
           "Implement authentication enhancements across connected applications, including NTLM authentication support in Saga and improvements across JSF, JSP, and frontend login flows.",
           "Build internal operational tooling such as a WebLogic monitoring application for server visibility and a log pruner utility for efficient production log management.",
