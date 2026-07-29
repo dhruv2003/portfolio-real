@@ -20,3 +20,4 @@
 - Prefers short/quick loading animations and splash screens — doesn't want them to linger or take too long. Confidence: 0.8
 - Prefers that intro/loading animations use session-level persistence (sessionStorage) so they don't replay on back navigation — shown only once per session. Confidence: 0.85
 - Wants clear instructions on how to activate/use hidden or easter-egg features so they can test them themselves. Confidence: 0.7
+- Tests on their actual physical mobile device (e.g., Samsung S24 Ultra) — not just browser responsive mode — and expects the site to look and work correctly on it. Confidence: 0.75

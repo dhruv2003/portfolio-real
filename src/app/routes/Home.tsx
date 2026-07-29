@@ -58,14 +58,15 @@ export function Home() {
 
   // Parallax scroll + depth tracking
   const scrollDepthFired = useRef(new Set<number>());
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   const handleScroll = useCallback(() => {
-    setScrollY(document.documentElement.scrollTop);
+    const raw = document.documentElement.scrollTop;
+    setScrollY(isMobile ? Math.min(raw, 120) : raw);
 
-    const scrollTop = document.documentElement.scrollTop;
     const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
     if (docHeight <= 0) return;
-    const pct = Math.round((scrollTop / docHeight) * 100);
+    const pct = Math.round((raw / docHeight) * 100);
 
     [25, 50, 75, 100].forEach((threshold) => {
       if (pct >= threshold && !scrollDepthFired.current.has(threshold)) {
@@ -73,7 +74,7 @@ export function Home() {
         trackEvent('scroll_depth', { depth: threshold });
       }
     });
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -163,7 +164,7 @@ export function Home() {
 
       {/* Main content */}
       <main className="flex-1 relative pb-32">
-        <section className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full h-[calc(100vh-140px)] min-h-[500px] flex flex-col justify-center items-center">
+        <section className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full min-h-[calc(100vh-140px)] flex flex-col justify-center items-center pt-8 pb-16">
           
           {/* Interactive Decorative background elements (Now visible on mobile) */}
           <motion.div
@@ -226,7 +227,7 @@ export function Home() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-[12vw] sm:text-7xl lg:text-8xl font-black uppercase text-black leading-[0.85] tracking-tighter flex flex-col items-center"
+              className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase text-black leading-[0.85] tracking-tighter flex flex-col items-center"
             >
               {showAll ? (
                 <>
@@ -235,7 +236,7 @@ export function Home() {
                   <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="block mt-4 sm:mt-5 hover:text-[#FF90E8] active:text-[#FF90E8] focus:text-[#FF90E8] transition-colors cursor-pointer focus:outline-none w-full text-center">Glue Work</motion.span>
                 </>
               ) : (
-                <span className="text-[12vw] sm:text-7xl lg:text-8xl">
+                <span className="text-5xl sm:text-7xl lg:text-8xl">
                   {typedText}
                   <motion.span
                     animate={{ opacity: [1, 0] }}
