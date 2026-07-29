@@ -25,7 +25,7 @@ export default function App() {
   // Mobile: shake to activate
   useEffect(() => {
     let lastShake = 0;
-    const SHAKE_THRESHOLD = 60;
+    const SHAKE_THRESHOLD = 90;
     const COOLDOWN = 3000;
 
     const handleMotion = (e: DeviceMotionEvent) => {
