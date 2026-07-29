@@ -64,14 +64,14 @@ export default function App() {
     };
   }, [activateHackerMode]);
 
-  // iOS: flip upside down to activate
+  // Mobile: flip upside down to activate
   useEffect(() => {
     let lastFlip = 0;
     const COOLDOWN = 5000;
-    const THRESHOLD = 15; // degrees from 180
+    const THRESHOLD = 15;
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      const beta = e.beta; // -180 to 180 (front/back tilt)
+      const beta = e.beta;
       if (beta === null) return;
       const isUpsideDown = Math.abs(Math.abs(beta) - 180) < THRESHOLD;
       if (isUpsideDown && Date.now() - lastFlip > COOLDOWN) {
@@ -80,27 +80,24 @@ export default function App() {
       }
     };
 
-    const requestPermission = async () => {
-      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+    const needsPermission = typeof (DeviceOrientationEvent as any).requestPermission === 'function';
+
+    if (needsPermission) {
+      // iOS: wait for first touch to request permission
+      const FirstTouch = async () => {
         try {
           const res = await (DeviceOrientationEvent as any).requestPermission();
           if (res === 'granted') window.addEventListener('deviceorientation', handleOrientation);
         } catch {}
-      } else {
-        window.addEventListener('deviceorientation', handleOrientation);
-      }
-    };
-
-    const FirstTouch = () => {
-      requestPermission();
-      window.removeEventListener('touchstart', FirstTouch);
-    };
-    window.addEventListener('touchstart', FirstTouch, { once: true });
-
-    return () => {
-      window.removeEventListener('deviceorientation', handleOrientation);
-      window.removeEventListener('touchstart', FirstTouch);
-    };
+        window.removeEventListener('touchstart', FirstTouch);
+      };
+      window.addEventListener('touchstart', FirstTouch, { once: true });
+      return () => window.removeEventListener('touchstart', FirstTouch);
+    } else {
+      // Android: works immediately, no permission needed
+      window.addEventListener('deviceorientation', handleOrientation);
+      return () => window.removeEventListener('deviceorientation', handleOrientation);
+    }
   }, [activateHackerMode]);
 
   useEffect(() => {
