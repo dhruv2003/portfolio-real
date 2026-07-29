@@ -56,6 +56,11 @@ export function Home() {
     return () => clearTimeout(timeout);
   }, [typedText, isDeleting, wordIdx, showAll, bootDone]);
 
+  // Start marquee on mount
+  useEffect(() => {
+    marqueeControls.start({ x: [0, -1000] });
+  }, [marqueeControls]);
+
   // Parallax scroll + depth tracking
   const scrollDepthFired = useRef(new Set<number>());
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;

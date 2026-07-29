@@ -21,3 +21,5 @@
 - Prefers that intro/loading animations use session-level persistence (sessionStorage) so they don't replay on back navigation — shown only once per session. Confidence: 0.85
 - Wants clear instructions on how to activate/use hidden or easter-egg features so they can test them themselves. Confidence: 0.7
 - Tests on their actual physical mobile device (e.g., Samsung S24 Ultra) — not just browser responsive mode — and expects the site to look and work correctly on it. Confidence: 0.75
+- Wants all interactive features to work cross-platform (desktop + mobile). When a feature is keyboard-triggered on desktop, expects the agent to proactively add a mobile alternative (e.g., shake-to-activate for hacker mode). Confidence: 0.75
+- Values having analytics/event tracking for easter eggs and user engagement — wants to measure scroll depth, easter egg discovery rates, path choices, and interaction timing via Google Analytics. Confidence: 0.7
