@@ -22,37 +22,75 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activateHackerMode]);
 
-  // Mobile: shake to activate
+  // Android: volume up + down held for 5s
   useEffect(() => {
-    let lastShake = 0;
-    const SHAKE_THRESHOLD = 90;
-    const COOLDOWN = 3000;
+    const pressed = new Set<string>();
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const handleMotion = (e: DeviceMotionEvent) => {
-      const acc = e.accelerationIncludingGravity;
-      if (!acc || acc.x === null || acc.y === null || acc.z === null) return;
-      const total = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
-      if (total > SHAKE_THRESHOLD && Date.now() - lastShake > COOLDOWN) {
-        lastShake = Date.now();
+    const check = () => {
+      if (pressed.has('VolumeUp') && pressed.has('VolumeDown')) {
+        if (!timer) {
+          timer = setTimeout(() => {
+            activateHackerMode();
+            pressed.clear();
+            timer = null;
+          }, 5000);
+        }
+      } else {
+        if (timer) { clearTimeout(timer); timer = null; }
+      }
+    };
+
+    const onDown = (e: KeyboardEvent) => {
+      if (e.key === 'VolumeUp' || e.key === 'VolumeDown') {
+        e.preventDefault();
+        pressed.add(e.key);
+        check();
+      }
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (e.key === 'VolumeUp' || e.key === 'VolumeDown') {
+        pressed.delete(e.key);
+        check();
+      }
+    };
+
+    window.addEventListener('keydown', onDown);
+    window.addEventListener('keyup', onUp);
+    return () => {
+      window.removeEventListener('keydown', onDown);
+      window.removeEventListener('keyup', onUp);
+      if (timer) clearTimeout(timer);
+    };
+  }, [activateHackerMode]);
+
+  // iOS: flip upside down to activate
+  useEffect(() => {
+    let lastFlip = 0;
+    const COOLDOWN = 5000;
+    const THRESHOLD = 15; // degrees from 180
+
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      const beta = e.beta; // -180 to 180 (front/back tilt)
+      if (beta === null) return;
+      const isUpsideDown = Math.abs(Math.abs(beta) - 180) < THRESHOLD;
+      if (isUpsideDown && Date.now() - lastFlip > COOLDOWN) {
+        lastFlip = Date.now();
         activateHackerMode();
       }
     };
 
-    // iOS 13+ requires permission
     const requestPermission = async () => {
-      if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
         try {
-          const res = await (DeviceMotionEvent as any).requestPermission();
-          if (res === 'granted') {
-            window.addEventListener('devicemotion', handleMotion);
-          }
+          const res = await (DeviceOrientationEvent as any).requestPermission();
+          if (res === 'granted') window.addEventListener('deviceorientation', handleOrientation);
         } catch {}
       } else {
-        window.addEventListener('devicemotion', handleMotion);
+        window.addEventListener('deviceorientation', handleOrientation);
       }
     };
 
-    // Request on first touch (required by iOS)
     const FirstTouch = () => {
       requestPermission();
       window.removeEventListener('touchstart', FirstTouch);
@@ -60,7 +98,7 @@ export default function App() {
     window.addEventListener('touchstart', FirstTouch, { once: true });
 
     return () => {
-      window.removeEventListener('devicemotion', handleMotion);
+      window.removeEventListener('deviceorientation', handleOrientation);
       window.removeEventListener('touchstart', FirstTouch);
     };
   }, [activateHackerMode]);
