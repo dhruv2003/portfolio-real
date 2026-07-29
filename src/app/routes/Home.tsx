@@ -1,11 +1,16 @@
-import { useState } from 'react';
-import { motion } from 'motion/react';
+import { useState, useRef } from 'react';
+import { motion, useAnimation } from 'motion/react';
 import { ArrowUpRight, MessageSquare, Terminal, LayoutDashboard, ArrowDown } from 'lucide-react';
 import { Link } from 'react-router';
 import { trackEvent } from "../../utils/analytics";
+import { fireConfetti } from "../../utils/confetti";
 
 export function Home() {
   const [dragText, setDragText] = useState("Drag Me");
+  const [logoClicks, setLogoClicks] = useState(0);
+  const [logoToast, setLogoToast] = useState(false);
+  const credibilityRef = useRef<HTMLDivElement>(null);
+  const marqueeControls = useAnimation();
   const words = ["DEVOPS ENGINEER", "ORACLE EXPERT", "KUBERNETES", "ASSOCIATE CONSULTANT", "SYSTEM DESIGN", "OBSERVABILITY", "BASH", "JAVA", "PYTHON", "BRUH", "HOW COOL IS THIS??", "THIS IS AWESOME", "I AM A GENIUS","WELL I SURVIVED ORACLE LAYOFFS"];
 
   return (
@@ -21,8 +26,25 @@ export function Home() {
         className="fixed top-0 left-0 right-0 z-50 bg-white border-b-4 border-black"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex justify-between items-center gap-4">
-          <div className="font-black text-base sm:text-xl uppercase tracking-widest bg-[#FFC900] px-2 sm:px-3 py-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-rotate-2 transition-transform flex-shrink">
+          <div
+            onClick={() => {
+              const next = logoClicks + 1;
+              setLogoClicks(next);
+              if (next >= 5 && !logoToast) {
+                setLogoToast(true);
+                fireConfetti();
+                trackEvent('easter_egg', { egg: 'logo_click_5' });
+                setTimeout(() => setLogoToast(false), 3000);
+              }
+            }}
+            className="font-black text-base sm:text-xl uppercase tracking-widest bg-[#FFC900] px-2 sm:px-3 py-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-rotate-2 transition-transform flex-shrink cursor-pointer select-none relative"
+          >
             Dhruv bhagatkar
+            {logoToast && (
+              <div className="absolute top-full left-0 mt-2 bg-black text-white font-bold text-sm px-3 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(255,201,0,1)] z-50 whitespace-nowrap">
+                Stop poking the SRE.
+              </div>
+            )}
           </div>
           <nav className="flex items-center gap-4 sm:gap-6 shrink-0">
             <Link to="/chat" className="hidden sm:inline-flex items-center gap-2 font-bold uppercase tracking-wider text-black hover:bg-[#FF90E8] px-3 py-1 border-2 border-transparent hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group whitespace-nowrap">
@@ -38,9 +60,14 @@ export function Home() {
       </motion.header>
 
       {/* Marquee */}
-      <div className="mt-[80px] bg-black text-white border-b-4 border-black overflow-hidden flex whitespace-nowrap py-4">
+      <motion.div
+        className="mt-[80px] bg-black text-white border-b-4 border-black overflow-hidden flex whitespace-nowrap py-4"
+        onHoverStart={() => marqueeControls.stop()}
+        onHoverEnd={() => marqueeControls.start({ x: [0, -1000] })}
+      >
         <motion.div
-          animate={{ x: [0, -1000] }}
+          animate={marqueeControls}
+          initial={{ x: 0 }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           className="flex gap-8 items-center shrink-0 font-black tracking-widest text-xl uppercase"
         >
@@ -51,10 +78,10 @@ export function Home() {
             </div>
           ))}
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Main content */}
-      <main className="flex-1 overflow-hidden relative pb-32">
+      <main className="flex-1 relative pb-32">
         <section className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full h-[calc(100vh-140px)] min-h-[500px] flex flex-col justify-center items-center">
           
           {/* Interactive Decorative background elements (Now visible on mobile) */}
@@ -131,7 +158,7 @@ export function Home() {
             animate={{ y: [0, 15, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
             className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 cursor-pointer group z-50"
-            onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+            onClick={() => credibilityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
           >
             <span className="font-black uppercase tracking-widest text-xs sm:text-sm bg-white px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:bg-[#FFC900] transition-colors">Keep Scrolling</span>
             <div className="bg-[#FF90E8] p-2 sm:p-3 border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-full group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group-hover:translate-y-[4px] transition-all">
@@ -139,7 +166,7 @@ export function Home() {
             </div>
           </motion.div>
         </section>
-        <section className="max-w-7xl mx-auto px-6 lg:px-12 py-20 relative z-10 w-full min-h-[80vh] flex flex-col justify-center items-center">
+        <section ref={credibilityRef} className="max-w-7xl mx-auto px-6 lg:px-12 py-20 relative z-10 w-full min-h-[80vh] flex flex-col justify-center items-center">
           <div className="max-w-4xl relative z-10 mx-auto text-center w-full">
             <motion.div
               initial={{ opacity: 0, y: 40 }}

@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { trackEvent } from "../../utils/analytics";
 import ReactMarkdown from 'react-markdown';
 import { detectMaliciousInput, validateMessageLength, RateLimiter } from '../../utils/security';
+import { fireConfetti } from '../../utils/confetti';
 
 interface Message {
   id: string;
@@ -74,6 +75,23 @@ export function ChatFullPage() {
       return;
     }
     // ---------------------------
+
+    // Easter egg: sudo hire dhruv
+    if (input.trim().toLowerCase() === 'sudo hire dhruv') {
+      const userMsg: Message = { id: Date.now().toString(), text: input, sender: 'user', timestamp: new Date() };
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: "Permission granted. 🎉\n\n**Hiring initiated.**\n\nOffer letter dispatched to bhagatkardhruv2003@gmail.com.\nCompensation: one portfolio visit and a GitHub star.\n\nDownloading resume for onboarding...", sender: 'ai', timestamp: new Date() };
+      setMessages(prev => [...prev, userMsg, botMsg]);
+      setInput('');
+      fireConfetti();
+      trackEvent('easter_egg', { egg: 'sudo_hire_dhruv' });
+      setTimeout(() => {
+        const a = document.createElement('a');
+        a.href = '/Dhruv_Bhagatkar_Resume.pdf';
+        a.download = 'Dhruv_Bhagatkar_Resume.pdf';
+        a.click();
+      }, 1500);
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),

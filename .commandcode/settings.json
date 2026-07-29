@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(npx tsc --noEmit 2 >& 1)",
+      "Shell(./node_modules/.bin/tsc:*)",
+      "Shell(npm:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

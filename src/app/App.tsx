@@ -2,8 +2,11 @@ import { useEffect } from 'react';
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
 import { initGA, trackPageView } from '../utils/analytics';
+import { useKonamiCode } from '../hooks/useKonamiCode';
 
 export default function App() {
+  useKonamiCode();
+
   useEffect(() => {
     // Initialize Google Analytics using your exact ID
     initGA(import.meta.env.VITE_GA_MEASUREMENT_ID);

@@ -1,0 +1,18 @@
+# - Wants discussion and approval before adding new libraries (e.g., GSAP, Anime.js). Confidence: 0.9
+- Wants discussion and approval before adding new libraries (e.g., GSAP, Anime.js). Confidence: 0.9
+- Prefers the agent to describe and explain things rather than just output code. Confidence: 0.9
+- Prefers an interactive approach for the website over a static one. Confidence: 0.8
+- Wants the agent to first check/review the existing website or context before proposing solutions. Confidence: 0.9
+- Asks for the agent's opinion/recommendation on what would be better. Confidence: 0.7
+- Uses "lgtm" as shorthand to approve work. Confidence: 0.7
+- Prefers to install npm packages himself manually (e.g., GSAP), but is okay with the agent using them once installed. Confidence: 0.8
+- Wants the agent to push code changes to git. Confidence: 0.7
+- Values easter eggs, playful touches, and quirky personality elements on the website. Confidence: 0.8
+- Prefers open-ended brainstorming where the agent suggests improvements across multiple dimensions (UI, UX, easter eggs, polish) rather than narrowing scope upfront. Confidence: 0.7
+- Prioritizes work in this order: bug fixes → playful polish/easter eggs → major new features. Confidence: 0.8
+- Once a plan is agreed upon, trusts the agent to autonomously execute the full task list (including spawning sub-agents) without requiring per-step oversight or explanations. Confidence: 0.8
+- Prefers to restore to a clean git baseline (HEAD) rather than manually undo work when unsatisfied; expects the agent to handle git discard/stash operations on their behalf. Confidence: 0.8
+- Strongly opposes dark mode for the website — does not want it implemented or even attempted, considers it visually unappealing for their design. Confidence: 0.9
+- Prefers to cherry-pick specific items from a list of suggestions rather than approving the entire list; explicitly names which items to do and which to skip/reject. Confidence: 0.7
+- Communicates comfortably in Hinglish (Hindi-English mixed language) and responds well when the agent matches this code-switching style. Confidence: 0.7
+- Asks for "kuch hatke" (unique, unconventional, out-of-the-box) ideas — values novelty and creative flair over standard/safe suggestions. Confidence: 0.7
