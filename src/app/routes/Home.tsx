@@ -1,20 +1,101 @@
-import { useState, useRef } from 'react';
-import { motion, useAnimation } from 'motion/react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, useAnimation, AnimatePresence } from 'motion/react';
 import { ArrowUpRight, MessageSquare, Terminal, LayoutDashboard, ArrowDown } from 'lucide-react';
 import { Link } from 'react-router';
 import { trackEvent } from "../../utils/analytics";
 import { fireConfetti } from "../../utils/confetti";
+import { BootSequence } from "../components/BootSequence";
+import { ContextMenu } from "../components/ContextMenu";
+
+const TYPING_WORDS = ["Backend", "Infrastructure", "Glue Work"];
+const TYPING_SPEED = 40;
+const DELETING_SPEED = 20;
+const PAUSE_AFTER_TYPE = 350;
+const PAUSE_AFTER_DELETE = 100;
 
 export function Home() {
   const [dragText, setDragText] = useState("Drag Me");
   const [logoClicks, setLogoClicks] = useState(0);
   const [logoToast, setLogoToast] = useState(false);
+  const [bootDone, setBootDone] = useState(false);
+  const [typedText, setTypedText] = useState("");
+  const [wordIdx, setWordIdx] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   const credibilityRef = useRef<HTMLDivElement>(null);
   const marqueeControls = useAnimation();
   const words = ["DEVOPS ENGINEER", "ORACLE EXPERT", "KUBERNETES", "ASSOCIATE CONSULTANT", "SYSTEM DESIGN", "OBSERVABILITY", "BASH", "JAVA", "PYTHON", "BRUH", "HOW COOL IS THIS??", "THIS IS AWESOME", "I AM A GENIUS","WELL I SURVIVED ORACLE LAYOFFS"];
 
+  // Typing animation
+  useEffect(() => {
+    if (!bootDone || showAll) return;
+    const currentWord = TYPING_WORDS[wordIdx];
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (typedText.length < currentWord.length) {
+          setTypedText(currentWord.slice(0, typedText.length + 1));
+        } else {
+          setTimeout(() => setIsDeleting(true), PAUSE_AFTER_TYPE);
+        }
+      } else {
+        if (typedText.length > 0) {
+          setTypedText(typedText.slice(0, -1));
+        } else {
+          setIsDeleting(false);
+          if (wordIdx < TYPING_WORDS.length - 1) {
+            setWordIdx(wordIdx + 1);
+          } else {
+            setShowAll(true);
+          }
+        }
+      }
+    }, isDeleting ? DELETING_SPEED : TYPING_SPEED);
+
+    return () => clearTimeout(timeout);
+  }, [typedText, isDeleting, wordIdx, showAll, bootDone]);
+
+  // Parallax scroll + depth tracking
+  const scrollDepthFired = useRef(new Set<number>());
+
+  const handleScroll = useCallback(() => {
+    setScrollY(document.documentElement.scrollTop);
+
+    const scrollTop = document.documentElement.scrollTop;
+    const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    if (docHeight <= 0) return;
+    const pct = Math.round((scrollTop / docHeight) * 100);
+
+    [25, 50, 75, 100].forEach((threshold) => {
+      if (pct >= threshold && !scrollDepthFired.current.has(threshold)) {
+        scrollDepthFired.current.add(threshold);
+        trackEvent('scroll_depth', { depth: threshold });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // Time to first interaction
+  useEffect(() => {
+    const startTime = Date.now();
+    const trackFirst = () => {
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      trackEvent('first_interaction', { seconds: elapsed });
+    };
+    window.addEventListener('click', trackFirst, { once: true });
+    return () => window.removeEventListener('click', trackFirst);
+  }, []);
+
   return (
-    <div 
+    <>
+      {!bootDone && <BootSequence onComplete={() => setBootDone(true)} />}
+      <ContextMenu />
+    <div
       className="min-h-screen bg-[#FFFDF9] text-black font-sans selection:bg-[#FFC900] selection:text-black flex flex-col relative"
       style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 2px, transparent 2px)', backgroundSize: '32px 32px' }}
     >
@@ -85,27 +166,28 @@ export function Home() {
         <section className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full h-[calc(100vh-140px)] min-h-[500px] flex flex-col justify-center items-center">
           
           {/* Interactive Decorative background elements (Now visible on mobile) */}
-          <motion.div 
-            drag 
-            whileDrag={{ scale: 1.1, zIndex: 50 }} 
-            dragConstraints={{ left: -150, right: 150, top: -100, bottom: 300 }} 
+          <motion.div
+            drag
+            whileDrag={{ scale: 1.1, zIndex: 50 }}
+            dragConstraints={{ left: -150, right: 150, top: -100, bottom: 300 }}
             onDragStart={() => setDragText("WHEEEE!")}
             onDragEnd={() => {
               setDragText("OUCH.");
               trackEvent("hero_drag", { object: "yellow_circle" });
             }}
+            style={{ y: scrollY * -0.15 }}
             className="absolute top-4 sm:top-12 right-2 sm:right-[10%] w-24 h-24 sm:w-48 sm:h-48 bg-[#FFC900] border-4 border-black rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center cursor-grab active:cursor-grabbing hover:rotate-12 transition-transform z-0"
           >
             <span className="font-black text-[8px] sm:text-xs uppercase rotate-12 bg-white px-1 sm:px-2 py-0.5 sm:py-1 border-2 border-black truncate max-w-[80%] text-center">{dragText}</span>
           </motion.div>
-          
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -150, right: 150, top: -300, bottom: 200 }} onDragEnd={() => trackEvent("hero_drag", { object: "blue_square" })} className="absolute bottom-32 sm:bottom-40 right-4 sm:right-[20%] w-16 h-16 sm:w-32 sm:h-32 bg-[#38BDF8] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:rotate-45 transition-transform duration-700 cursor-grab active:cursor-grabbing rotate-12 z-0" />
 
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -50, right: 300, top: -100, bottom: 400 }} className="absolute top-24 sm:top-40 left-4 sm:left-[10%] w-8 h-8 sm:w-12 sm:h-12 bg-black rotate-45 cursor-grab active:cursor-grabbing z-0" />
-          
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -50, right: 300, top: -400, bottom: 200 }} className="absolute bottom-40 sm:bottom-60 left-8 sm:left-[5%] w-10 h-10 sm:w-16 sm:h-16 border-[4px] sm:border-8 border-black rounded-full cursor-grab active:cursor-grabbing z-0" />
-          
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -100, right: 400, top: -300, bottom: 300 }} className="absolute hidden sm:block top-1/2 left-[15%] w-40 h-10 bg-[#FF90E8] border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] -rotate-6 cursor-grab active:cursor-grabbing z-0" />
+          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -150, right: 150, top: -300, bottom: 200 }} onDragEnd={() => trackEvent("hero_drag", { object: "blue_square" })} style={{ y: scrollY * -0.25 }} className="absolute bottom-32 sm:bottom-40 right-4 sm:right-[20%] w-16 h-16 sm:w-32 sm:h-32 bg-[#38BDF8] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:rotate-45 transition-transform duration-700 cursor-grab active:cursor-grabbing rotate-12 z-0" />
+
+          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -50, right: 300, top: -100, bottom: 400 }} style={{ y: scrollY * -0.1 }} className="absolute top-24 sm:top-40 left-4 sm:left-[10%] w-8 h-8 sm:w-12 sm:h-12 bg-black rotate-45 cursor-grab active:cursor-grabbing z-0" />
+
+          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -50, right: 300, top: -400, bottom: 200 }} style={{ y: scrollY * -0.3 }} className="absolute bottom-40 sm:bottom-60 left-8 sm:left-[5%] w-10 h-10 sm:w-16 sm:h-16 border-[4px] sm:border-8 border-black rounded-full cursor-grab active:cursor-grabbing z-0" />
+
+          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -100, right: 400, top: -300, bottom: 300 }} style={{ y: scrollY * -0.2 }} className="absolute hidden sm:block top-1/2 left-[15%] w-40 h-10 bg-[#FF90E8] border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] -rotate-6 cursor-grab active:cursor-grabbing z-0" />
 
           {/* Draggable Terminal Window */}
           <motion.div 
@@ -146,9 +228,22 @@ export function Home() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-[12vw] sm:text-7xl lg:text-8xl font-black uppercase text-black leading-[0.85] tracking-tighter flex flex-col items-center"
             >
-              <span tabIndex={0} className="block hover:text-[#38BDF8] active:text-[#38BDF8] focus:text-[#38BDF8] transition-colors cursor-pointer focus:outline-none w-full text-center">Backend</span>
-              <span tabIndex={0} className="inline-block bg-[#FFC900] px-2 sm:px-4 py-2 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-2 sm:mt-4 rotate-1 hover:-rotate-1 active:-rotate-1 focus:-rotate-1 transition-transform text-[8.5vw] sm:text-7xl lg:text-8xl text-center cursor-pointer focus:outline-none self-center z-10 relative">Infrastructure</span>
-              <span tabIndex={0} className="block mt-4 sm:mt-5 hover:text-[#FF90E8] active:text-[#FF90E8] focus:text-[#FF90E8] transition-colors cursor-pointer focus:outline-none w-full text-center">Glue Work</span>
+              {showAll ? (
+                <>
+                  <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="block hover:text-[#38BDF8] active:text-[#38BDF8] focus:text-[#38BDF8] transition-colors cursor-pointer focus:outline-none w-full text-center">Backend</motion.span>
+                  <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="inline-block bg-[#FFC900] px-2 sm:px-4 py-2 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-2 sm:mt-4 rotate-1 text-[8.5vw] sm:text-7xl lg:text-8xl text-center self-center z-10 relative">Infrastructure</motion.span>
+                  <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="block mt-4 sm:mt-5 hover:text-[#FF90E8] active:text-[#FF90E8] focus:text-[#FF90E8] transition-colors cursor-pointer focus:outline-none w-full text-center">Glue Work</motion.span>
+                </>
+              ) : (
+                <span className="text-[12vw] sm:text-7xl lg:text-8xl">
+                  {typedText}
+                  <motion.span
+                    animate={{ opacity: [1, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                    className="inline-block w-[3px] sm:w-1 h-[0.8em] bg-black ml-1 align-middle"
+                  />
+                </span>
+              )}
             </motion.h1>
 
           </div>
@@ -191,7 +286,7 @@ export function Home() {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
-                <Link to="/chat" className="block bg-[#FF90E8] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all group text-left h-full flex flex-col justify-between">
+                <Link to="/chat" onClick={() => trackEvent('path_choice', { choice: 'chat' })} className="block bg-[#FF90E8] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all group text-left h-full flex flex-col justify-between">
                   <div>
                     <div className="bg-black text-white w-16 h-16 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mb-6 group-hover:rotate-12 transition-transform">
                       <Terminal className="w-8 h-8" />
@@ -211,7 +306,7 @@ export function Home() {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <Link to="/normal" className="block bg-[#38BDF8] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all group text-left h-full flex flex-col justify-between">
+                <Link to="/normal" onClick={() => trackEvent('path_choice', { choice: 'manual' })} className="block bg-[#38BDF8] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all group text-left h-full flex flex-col justify-between">
                   <div>
                     <div className="bg-white text-black w-16 h-16 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-6 group-hover:-rotate-12 transition-transform">
                       <LayoutDashboard className="w-8 h-8" />
@@ -236,10 +331,10 @@ export function Home() {
             <div className="flex flex-col gap-6">
               <p className="text-2xl font-black uppercase tracking-wider text-black">Get in touch</p>
               <div className="flex gap-4 flex-wrap">
-                <a href="https://github.com/dhruv2003" target="_blank" rel="noreferrer" className="font-bold bg-[#FFC900] border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-black">GitHub</a>
-                <a href="https://www.linkedin.com/in/dhruv-bhagatkar-1b267995" target="_blank" rel="noreferrer" className="font-bold bg-[#FF90E8] border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-black">LinkedIn</a>
-                <a href="https://www.thisisdhruv.in/" target="_blank" rel="noreferrer" className="font-bold bg-[#38BDF8] border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-black">Website</a>
-                <a href="mailto:bhagatkardhruv2003@gmail.com" className="font-bold bg-white border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-black">Email</a>
+                <a href="https://github.com/dhruv2003" target="_blank" rel="noreferrer" onClick={() => trackEvent('outbound_click', { destination: 'github' })} className="font-bold bg-[#FFC900] border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-black">GitHub</a>
+                <a href="https://www.linkedin.com/in/dhruv-bhagatkar-1b267995" target="_blank" rel="noreferrer" onClick={() => trackEvent('outbound_click', { destination: 'linkedin' })} className="font-bold bg-[#FF90E8] border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-black">LinkedIn</a>
+                <a href="https://www.thisisdhruv.in/" target="_blank" rel="noreferrer" onClick={() => trackEvent('outbound_click', { destination: 'website' })} className="font-bold bg-[#38BDF8] border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-black">Website</a>
+                <a href="mailto:bhagatkardhruv2003@gmail.com" onClick={() => trackEvent('outbound_click', { destination: 'email' })} className="font-bold bg-white border-2 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-black">Email</a>
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -251,5 +346,6 @@ export function Home() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

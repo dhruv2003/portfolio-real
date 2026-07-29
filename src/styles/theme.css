@@ -80,6 +80,37 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Hacker mode */
+.hacker-mode {
+  filter: none !important;
+}
+.hacker-mode * {
+  color: #00ff41 !important;
+  border-color: #00ff41 !important;
+  background-color: #0a0a0a !important;
+  text-shadow: 0 0 5px #00ff41 !important;
+  box-shadow: none !important;
+}
+.hacker-mode .bg-white,
+.hacker-mode [class*="bg-white"] {
+  background-color: #0d0d0d !important;
+}
+.hacker-mode .bg-black,
+.hacker-mode [class*="bg-black"] {
+  background-color: #001100 !important;
+}
+.hacker-mode .bg-\\[\\#FFC900\\],
+.hacker-mode .bg-\\[\\#FF90E8\\],
+.hacker-mode .bg-\\[\\#38BDF8\\] {
+  background-color: #003300 !important;
+}
+.hacker-mode img {
+  filter: grayscale(1) brightness(0.3) !important;
+}
+.hacker-mode .selection\:bg-\\[\\#FFC900\\]::selection {
+  background-color: #00ff41 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

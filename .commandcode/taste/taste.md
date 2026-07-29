@@ -7,6 +7,7 @@
 - Prefers to install npm packages himself manually (e.g., GSAP), but is okay with the agent using them once installed. Confidence: 0.8
 - Wants the agent to push code changes to git. Confidence: 0.7
 - Values easter eggs, playful touches, and quirky personality elements on the website. Confidence: 0.8
+- Prefers bold, intense, dramatic visual effects for easter eggs — rejects overly subtle or toned-down versions. When something feels "glitchy," the issue is typically performance/lag, not visual intensity. Confidence: 0.8
 - Prefers open-ended brainstorming where the agent suggests improvements across multiple dimensions (UI, UX, easter eggs, polish) rather than narrowing scope upfront. Confidence: 0.7
 - Prioritizes work in this order: bug fixes → playful polish/easter eggs → major new features. Confidence: 0.8
 - Once a plan is agreed upon, trusts the agent to autonomously execute the full task list (including spawning sub-agents) without requiring per-step oversight or explanations. Confidence: 0.8
@@ -15,3 +16,6 @@
 - Prefers to cherry-pick specific items from a list of suggestions rather than approving the entire list; explicitly names which items to do and which to skip/reject. Confidence: 0.7
 - Communicates comfortably in Hinglish (Hindi-English mixed language) and responds well when the agent matches this code-switching style. Confidence: 0.7
 - Asks for "kuch hatke" (unique, unconventional, out-of-the-box) ideas — values novelty and creative flair over standard/safe suggestions. Confidence: 0.7
+- Prefers short/quick loading animations and splash screens — doesn't want them to linger or take too long. Confidence: 0.8
+- Prefers that intro/loading animations use session-level persistence (sessionStorage) so they don't replay on back navigation — shown only once per session. Confidence: 0.85
+- Wants clear instructions on how to activate/use hidden or easter-egg features so they can test them themselves. Confidence: 0.7
