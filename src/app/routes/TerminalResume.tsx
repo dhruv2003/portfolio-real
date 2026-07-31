@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
 import { ArrowLeft, Download, Send, Terminal } from "lucide-react";
 import { Link } from "react-router";
 import { trackEvent } from "../../utils/analytics";
@@ -132,48 +131,58 @@ export function TerminalResume() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-black font-sans selection:bg-[#FFC900] selection:text-black">
-      <header className="sticky top-0 z-50 bg-white border-b-4 border-black px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
-          <Link to="/" aria-label="Back to home" className="bg-white border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
+    <div className="h-screen max-h-screen overflow-hidden bg-[#FFFDF9] text-black font-sans selection:bg-[#FFC900] selection:text-black flex flex-col">
+      <header className="shrink-0 z-50 bg-white border-b-4 border-black px-3 sm:px-6 lg:px-8 py-3 flex justify-between items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link to="/" aria-label="Back to home" className="shrink-0 bg-white border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div className="font-black text-sm sm:text-xl uppercase tracking-widest bg-[#FFC900] px-3 py-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <div className="font-black text-xs sm:text-lg uppercase tracking-widest bg-[#FFC900] px-2.5 sm:px-3 py-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] truncate">
             Terminal Resume //
           </div>
+          <div className="hidden md:inline-flex items-center gap-2 bg-black text-white border-2 border-black px-3 py-1 font-black uppercase tracking-widest text-xs">
+            <Terminal className="w-3.5 h-3.5" /> Theatre mode
+          </div>
         </div>
-        <a href="/Dhruv_Bhagatkar_Resume.pdf" download onClick={() => trackEvent("resume_download", { source: "terminal_resume" })} className="hidden sm:inline-flex items-center gap-2 font-black uppercase bg-[#38BDF8] px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
-          <Download className="w-4 h-4" /> Resume
+        <a href="/Dhruv_Bhagatkar_Resume.pdf" download onClick={() => trackEvent("resume_download", { source: "terminal_resume" })} className="shrink-0 inline-flex items-center gap-2 font-black uppercase bg-[#38BDF8] px-3 sm:px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-sm">
+          <Download className="w-4 h-4" /> <span className="hidden sm:inline">Resume</span>
         </a>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12 py-10 sm:py-16">
-        <motion.section initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="inline-flex items-center gap-2 bg-black text-white border-4 border-black px-4 py-2 font-black uppercase tracking-widest shadow-[6px_6px_0px_0px_rgba(255,201,0,1)] mb-6">
-            <Terminal className="w-5 h-5" /> Interactive CLI
-          </div>
-          <h1 className="text-5xl sm:text-7xl font-black uppercase leading-none tracking-tighter max-w-4xl">
-            Explore my resume like a production shell.
-          </h1>
-        </motion.section>
-
-        <motion.section initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-black text-[#7CFF6B] border-4 border-black shadow-[12px_12px_0px_0px_rgba(255,201,0,1)] overflow-hidden">
-          <div className="bg-[#FFC900] text-black border-b-4 border-black px-4 py-3 flex items-center justify-between">
-            <span className="font-black uppercase tracking-widest">dhruv-os</span>
-            <div className="flex gap-2">
-              <span className="w-4 h-4 rounded-full bg-[#FF90E8] border-2 border-black" />
-              <span className="w-4 h-4 rounded-full bg-[#38BDF8] border-2 border-black" />
-              <span className="w-4 h-4 rounded-full bg-white border-2 border-black" />
+      <main className="flex-1 min-h-0 w-full px-2 sm:px-4 lg:px-6 py-2 sm:py-3 flex flex-col">
+        <section className="flex-1 min-h-0 h-full bg-black text-[#7CFF6B] border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,201,0,1)] overflow-hidden flex flex-col">
+          <div className="shrink-0 bg-[#FFC900] text-black border-b-4 border-black px-3 sm:px-4 py-2.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="font-black uppercase tracking-widest">dhruv-os</span>
+              <span className="hidden sm:inline font-mono text-xs font-bold truncate">
+                type help · whoami · skills · projects · download
+              </span>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#FF90E8] border-2 border-black" />
+              <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#38BDF8] border-2 border-black" />
+              <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white border-2 border-black" />
             </div>
           </div>
-          <div className="p-4 sm:p-6 font-mono min-h-[520px] max-h-[65vh] overflow-y-auto" onClick={() => inputRef.current?.focus()}>
+          <div
+            className="flex-1 min-h-0 p-3 sm:p-5 lg:p-6 font-mono text-sm sm:text-base overflow-y-auto"
+            onClick={() => inputRef.current?.focus()}
+          >
             <div role="log" aria-live="polite" aria-relevant="additions text">
-            {history.map((entry, idx) => (
-              <div key={idx} className="mb-4">
-                {entry.prompt && <p className="text-white"><span className="text-[#38BDF8]">{entry.prompt}</span></p>}
-                {entry.output.map((line, lineIdx) => <p key={lineIdx} className="leading-relaxed whitespace-pre-wrap">{line}</p>)}
-              </div>
-            ))}
+              {history.map((entry, idx) => (
+                <div key={idx} className="mb-4">
+                  {entry.prompt && (
+                    <p className="text-white">
+                      <span className="text-[#38BDF8]">{entry.prompt}</span>
+                    </p>
+                  )}
+                  {entry.output.map((line, lineIdx) => (
+                    <p key={lineIdx} className="leading-relaxed whitespace-pre-wrap">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              ))}
             </div>
             <div className="flex items-center gap-2 text-white">
               <span className="text-[#38BDF8] shrink-0">{TERMINAL_PROMPT}</span>
@@ -186,13 +195,17 @@ export function TerminalResume() {
                 className="bg-transparent outline-none flex-1 text-[#7CFF6B] min-w-0"
                 aria-label="Terminal command"
               />
-              <button onClick={runCommand} aria-label="Run terminal command" className="sm:hidden bg-[#FFC900] text-black border-2 border-black p-1">
+              <button
+                onClick={runCommand}
+                aria-label="Run terminal command"
+                className="sm:hidden bg-[#FFC900] text-black border-2 border-black p-1"
+              >
                 <Send className="w-4 h-4" />
               </button>
             </div>
             <div ref={bottomRef} />
           </div>
-        </motion.section>
+        </section>
       </main>
     </div>
   );
