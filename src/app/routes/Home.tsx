@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useAnimation, AnimatePresence } from 'motion/react';
-import { ArrowUpRight, MessageSquare, Terminal, LayoutDashboard, ArrowDown } from 'lucide-react';
+import { ArrowUpRight, Terminal, LayoutDashboard, ArrowDown, Activity, Server, ShieldCheck, GitBranch, Cpu } from 'lucide-react';
 import { Link } from 'react-router';
 import { trackEvent } from "../../utils/analytics";
 import { fireConfetti } from "../../utils/confetti";
@@ -134,6 +134,10 @@ export function Home() {
             )}
           </div>
           <nav className="flex items-center gap-4 sm:gap-6 shrink-0">
+            <Link to="/terminal" className="hidden md:inline-flex items-center gap-2 font-bold uppercase tracking-wider text-black hover:bg-[#FFC900] px-3 py-1 border-2 border-transparent hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group whitespace-nowrap">
+              <Terminal className="w-4 h-4 shrink-0 group-hover:rotate-12 transition-transform" />
+              CLI Resume
+            </Link>
             <Link to="/chat" className="hidden sm:inline-flex items-center gap-2 font-bold uppercase tracking-wider text-black hover:bg-[#FF90E8] px-3 py-1 border-2 border-transparent hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group whitespace-nowrap">
               <Terminal className="w-4 h-4 shrink-0 group-hover:rotate-12 transition-transform" />
               Chat
@@ -267,6 +271,150 @@ export function Home() {
             </div>
           </motion.div>
         </section>
+
+
+        {/* System Status Dashboard */}
+        <section className="max-w-7xl mx-auto px-6 lg:px-12 py-16 relative z-10 w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.5 }}
+            className="bg-black text-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(56,189,248,1)] overflow-hidden"
+          >
+            <div className="bg-[#FFC900] text-black border-b-4 border-black px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Activity className="w-6 h-6" />
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">Live System Status</h2>
+              </div>
+              <span className="font-mono font-black bg-white border-2 border-black px-3 py-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] self-start sm:self-auto">all systems operational</span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+              <div className="lg:col-span-2 p-5 sm:p-8 border-b-4 lg:border-b-0 lg:border-r-4 border-black">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  {[
+                    { name: 'portfolio-web', status: 'healthy', meta: '99.99% uptime', color: 'bg-[#7CFF6B]' },
+                    { name: 'resume-service', status: 'online', meta: 'PDF ready', color: 'bg-[#38BDF8]' },
+                    { name: 'chat-terminal', status: 'listening', meta: 'AI route active', color: 'bg-[#FF90E8]' },
+                    { name: 'hire-dhruv-job', status: 'pending', meta: 'awaiting recruiter', color: 'bg-[#FFC900]' },
+                  ].map((service) => (
+                    <div key={service.name} className="bg-white text-black border-4 border-black p-4 shadow-[6px_6px_0px_0px_rgba(255,255,255,0.25)]">
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <p className="font-mono font-black text-sm sm:text-base truncate">{service.name}</p>
+                        <span className={`w-4 h-4 rounded-full border-2 border-black ${service.color}`} />
+                      </div>
+                      <p className="font-black uppercase text-xl">{service.status}</p>
+                      <p className="font-bold text-gray-600">{service.meta}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  {[
+                    ['CPU', '21%'],
+                    ['Memory', '42%'],
+                    ['Deploys', 'green'],
+                  ].map(([label, value]) => (
+                    <div key={label} className="bg-[#FFFDF9] text-black border-4 border-black p-3 sm:p-4 text-center">
+                      <p className="font-black text-xs sm:text-sm uppercase tracking-widest text-gray-600">{label}</p>
+                      <p className="font-black text-2xl sm:text-3xl uppercase">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-5 sm:p-8 bg-[#111] font-mono text-sm sm:text-base">
+                <p className="text-[#FFC900] font-black mb-4 uppercase">streaming logs</p>
+                {[
+                  '[ok] deployment checksum verified',
+                  '[ok] resume cache warmed',
+                  '[ok] terminal route mounted',
+                  '[info] recruiter entered portfolio',
+                  '[todo] ship more case studies',
+                ].map((log, idx) => (
+                  <motion.p
+                    key={log}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.08 }}
+                    className="text-[#7CFF6B] mb-3"
+                  >
+                    {log}
+                  </motion.p>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Engineering Stories */}
+        <section className="max-w-7xl mx-auto px-6 lg:px-12 py-16 relative z-10 w-full">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-[#FF90E8] border-4 border-black px-4 py-2 font-black uppercase tracking-widest shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] mb-5">
+                <ShieldCheck className="w-5 h-5" /> Engineering Logs
+              </div>
+              <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter leading-none">Problems solved, not just skills listed.</h2>
+            </div>
+            <Link to="/terminal" onClick={() => trackEvent('path_choice', { choice: 'terminal_resume' })} className="font-black uppercase bg-[#FFC900] border-4 border-black px-5 py-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all inline-flex items-center gap-2 self-start">
+              Open CLI Resume <ArrowUpRight className="w-5 h-5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Server,
+                title: 'Production Reliability',
+                problem: 'Enterprise systems need fast diagnosis when builds, deployments, or runtime behavior fails.',
+                fix: 'Lean on logs, environment checks, deployment flow understanding, and automation-first debugging.',
+                impact: 'Faster incident response and cleaner operational workflows.',
+                color: 'bg-[#38BDF8]',
+              },
+              {
+                icon: Cpu,
+                title: 'Observability + Logging',
+                problem: 'Large noisy logs make debugging slower and can waste disk/CPU resources.',
+                fix: 'Structure the signal, prune noise, and make runtime behavior easier to inspect.',
+                impact: 'More useful logs, lower operational friction, and stronger system visibility.',
+                color: 'bg-[#FFC900]',
+              },
+              {
+                icon: GitBranch,
+                title: 'Auth + Integration Flows',
+                problem: 'Authentication and cross-system integrations fail in subtle ways across enterprise environments.',
+                fix: 'Map redirects, tokens, validations, configs, and backend handshakes end-to-end.',
+                impact: 'More reliable platform integrations and easier troubleshooting.',
+                color: 'bg-[#FF90E8]',
+              },
+            ].map((story, idx) => {
+              const Icon = story.icon;
+              return (
+                <motion.article
+                  key={story.title}
+                  initial={{ opacity: 0, y: 35 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ delay: idx * 0.1 }}
+                  className={`${story.color} border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-5`}
+                >
+                  <div className="bg-white border-4 border-black w-16 h-16 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <Icon className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-3xl font-black uppercase leading-none">{story.title}</h3>
+                  <div className="space-y-4 font-bold text-base">
+                    <p><span className="bg-black text-white px-2 py-1 uppercase text-xs font-black mr-2">Problem</span>{story.problem}</p>
+                    <p><span className="bg-black text-white px-2 py-1 uppercase text-xs font-black mr-2">Fix</span>{story.fix}</p>
+                    <p><span className="bg-black text-white px-2 py-1 uppercase text-xs font-black mr-2">Impact</span>{story.impact}</p>
+                  </div>
+                </motion.article>
+              );
+            })}
+          </div>
+        </section>
+
         <section ref={credibilityRef} className="max-w-7xl mx-auto px-6 lg:px-12 py-20 relative z-10 w-full min-h-[80vh] flex flex-col justify-center items-center">
           <div className="max-w-4xl relative z-10 mx-auto text-center w-full">
             <motion.div
@@ -285,7 +433,7 @@ export function Home() {
             </motion.div>
 
             {/* Path Selection Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -322,6 +470,26 @@ export function Home() {
                   </div>
                   <div className="flex items-center gap-2 font-black uppercase tracking-widest text-black border-2 border-black bg-[#FFC900] px-4 py-2 self-start shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:bg-black group-hover:text-[#FFC900] transition-colors">
                     View Resume <ArrowUpRight className="w-5 h-5" />
+                  </div>
+                </Link>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <Link to="/terminal" onClick={() => trackEvent('path_choice', { choice: 'terminal_resume' })} className="block bg-[#FFC900] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all group text-left h-full flex flex-col justify-between">
+                  <div>
+                    <div className="bg-black text-[#7CFF6B] w-16 h-16 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mb-6 group-hover:rotate-12 transition-transform">
+                      <Terminal className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-3xl font-black uppercase mb-4">CLI<br/>Resume</h2>
+                    <p className="text-lg font-bold mb-8">Type commands, inspect portfolio services, download the resume, and explore experience like a shell.</p>
+                  </div>
+                  <div className="flex items-center gap-2 font-black uppercase tracking-widest text-black border-2 border-black bg-white px-4 py-2 self-start shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:bg-black group-hover:text-[#FFC900] transition-colors">
+                    Run Commands <ArrowUpRight className="w-5 h-5" />
                   </div>
                 </Link>
               </motion.div>
