@@ -1,41 +1,56 @@
+declare global {
+  interface Window {
+    dataLayer?: unknown[];
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
+const GA_ID_PATTERN = /^G-[A-Z0-9]+$/i;
+
+function gtag(...args: unknown[]) {
+  if (typeof window.gtag === 'function') {
+    window.gtag(...args);
+  }
+}
+
 export const initGA = (measurementId: string | undefined) => {
-  if (!measurementId || measurementId === "your-google-analytics-id-here") {
-    console.warn("Google Analytics: No Measurement ID provided in .env");
+  if (!measurementId || measurementId === 'your-google-analytics-id-here') {
+    if (import.meta.env.DEV) {
+      console.warn('Google Analytics: No Measurement ID provided');
+    }
     return;
   }
-  
-  if (document.getElementById("ga-script")) return;
 
-  const script = document.createElement("script");
-  script.id = "ga-script";
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+  if (!GA_ID_PATTERN.test(measurementId)) {
+    if (import.meta.env.DEV) {
+      console.warn('Google Analytics: Invalid Measurement ID format');
+    }
+    return;
+  }
+
+  if (document.getElementById('ga-script')) return;
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function gtagFn(...args: unknown[]) {
+    window.dataLayer?.push(args);
+  };
+  window.gtag('js', new Date());
+  window.gtag('config', measurementId);
+
+  const script = document.createElement('script');
+  script.id = 'ga-script';
   script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
   document.head.appendChild(script);
-
-  const dataLayerScript = document.createElement("script");
-  dataLayerScript.innerHTML = `
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '${measurementId}');
-  `;
-  document.head.appendChild(dataLayerScript);
 };
 
 export const trackPageView = (path: string) => {
-  // @ts-ignore
-  if (typeof window !== "undefined" && window.gtag) {
-    // @ts-ignore
-    window.gtag("event", "page_view", {
-      page_path: path,
-    });
-  }
+  gtag('event', 'page_view', { page_path: path });
 };
 
-export const trackEvent = (eventName: string, eventParams: Record<string, string | number | boolean> = {}) => {
-  // @ts-ignore
-  if (typeof window !== "undefined" && window.gtag) {
-    // @ts-ignore
-    window.gtag("event", eventName, eventParams);
-  }
+export const trackEvent = (
+  eventName: string,
+  eventParams: Record<string, string | number | boolean> = {}
+) => {
+  gtag('event', eventName, eventParams);
 };
