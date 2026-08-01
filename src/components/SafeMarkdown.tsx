@@ -18,12 +18,16 @@ const components: Components = {
   ol: ({ children }) => (
     <ol className="list-decimal space-y-2 mb-4 last:mb-0 pl-6">{children}</ol>
   ),
+  // Unordered lists keep neo-brutalist ▹ markers; ordered lists keep native decimals.
   li: ({ children }) => (
-    <li className="flex gap-3 items-start">
-      <span className="text-[#FF90E8] mt-1.5 shrink-0 font-black" aria-hidden>
+    <li className="flex gap-3 items-start in-[ol]:list-item in-[ol]:block">
+      <span
+        className="text-[#FF90E8] mt-1.5 shrink-0 font-black in-[ol]:hidden"
+        aria-hidden
+      >
         ▹
       </span>
-      <span className="flex-1">{children}</span>
+      <span className="flex-1 in-[ol]:inline">{children}</span>
     </li>
   ),
   strong: ({ children }) => (
