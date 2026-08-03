@@ -97,6 +97,15 @@ export function TerminalResume() {
 
     trackEvent("terminal_resume_command", { command });
 
+    if (/\b(claude|codex)\b/i.test(command)) {
+      appendHistory(raw, [
+        "ERROR 503: External AI detected.",
+        "This terminal runs on Dhruv-powered infrastructure.",
+        "Please ask about Dhruv's work instead of summoning the competition.",
+      ]);
+      return;
+    }
+
     if (command === "clear") {
       setHistory([]);
       setInput("");
