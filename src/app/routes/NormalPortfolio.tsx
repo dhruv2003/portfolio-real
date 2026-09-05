@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   ArrowLeft,
   Mail,
@@ -32,6 +32,8 @@ const rotatingRoles = [
 
 export function NormalPortfolio() {
   const [activeRoleIndex, setActiveRoleIndex] = useState(0);
+  const [displayedRole, setDisplayedRole] = useState("");
+  const [isDeletingRole, setIsDeletingRole] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -39,16 +41,40 @@ export function NormalPortfolio() {
   }, []);
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
+    if (prefersReducedMotion) {
+      setDisplayedRole(rotatingRoles[0]);
+      return;
+    }
 
-    const roleInterval = window.setInterval(() => {
-      setActiveRoleIndex((currentIndex) =>
-        (currentIndex + 1) % rotatingRoles.length
-      );
-    }, 2200);
+    const activeRole = rotatingRoles[activeRoleIndex];
+    const roleIsComplete = displayedRole === activeRole;
+    const roleIsEmpty = displayedRole.length === 0;
+    const delay = roleIsComplete && !isDeletingRole
+      ? 700
+      : isDeletingRole
+        ? 22
+        : 44;
 
-    return () => window.clearInterval(roleInterval);
-  }, [prefersReducedMotion]);
+    const typingTimeout = window.setTimeout(() => {
+      if (!isDeletingRole && roleIsComplete) {
+        setIsDeletingRole(true);
+        return;
+      }
+
+      if (isDeletingRole && roleIsEmpty) {
+        setIsDeletingRole(false);
+        setActiveRoleIndex((currentIndex) =>
+          (currentIndex + 1) % rotatingRoles.length
+        );
+        return;
+      }
+
+      const nextLength = displayedRole.length + (isDeletingRole ? -1 : 1);
+      setDisplayedRole(activeRole.slice(0, nextLength));
+    }, delay);
+
+    return () => window.clearTimeout(typingTimeout);
+  }, [activeRoleIndex, displayedRole, isDeletingRole, prefersReducedMotion]);
 
   const data = {
     name: "Dhruv Bhagatkar",
@@ -368,7 +394,6 @@ export function NormalPortfolio() {
                     {idx === 0 ? (
                       <div
                         className="inline-grid text-xl font-bold text-[#FF90E8] [text-shadow:1px_1px_0px_#000] mt-1 overflow-hidden"
-                        aria-live="polite"
                       >
                         <span
                           className="invisible col-start-1 row-start-1 whitespace-nowrap"
@@ -376,29 +401,22 @@ export function NormalPortfolio() {
                         >
                           Professional Log Archaeologist
                         </span>
-                        <AnimatePresence mode="wait" initial={false}>
+                        <span
+                          className="col-start-1 row-start-1 whitespace-nowrap"
+                          aria-hidden="true"
+                        >
+                          {displayedRole}
                           <motion.span
-                            key={rotatingRoles[activeRoleIndex]}
-                            initial={
-                              prefersReducedMotion
-                                ? false
-                                : { y: "110%", opacity: 0 }
-                            }
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={
-                              prefersReducedMotion
-                                ? undefined
-                                : { y: "-110%", opacity: 0 }
-                            }
-                            transition={{
-                              duration: 0.38,
-                              ease: [0.22, 1, 0.36, 1],
-                            }}
-                            className="col-start-1 row-start-1 whitespace-nowrap"
+                            animate={prefersReducedMotion ? undefined : { opacity: [1, 1, 0, 0] }}
+                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                            className="inline-block ml-0.5"
                           >
-                            {rotatingRoles[activeRoleIndex]}
+                            |
                           </motion.span>
-                        </AnimatePresence>
+                        </span>
+                        <span className="sr-only" aria-live="polite">
+                          {rotatingRoles[activeRoleIndex]}
+                        </span>
                       </div>
                     ) : (
                       <p className="text-xl font-bold text-[#FF90E8] [text-shadow:1px_1px_0px_#000] mt-1">
