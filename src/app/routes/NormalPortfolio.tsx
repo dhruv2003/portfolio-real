@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   ArrowLeft,
   Mail,
@@ -18,10 +18,37 @@ import { Link } from "react-router";
 import { ImageWithFallback } from "../components/media/ImageWithFallback";
 import { trackEvent } from "../../utils/analytics";
 
+const rotatingRoles = [
+  "Associate Consultant",
+  "Backend Engineer",
+  "DevOps Engineer",
+  "Software Developer",
+  "DBA / Query Therapist",
+  "Frontend, Under Protest",
+  "Testing Department of One",
+  "Production Firefighter",
+  "Professional Log Archaeologist",
+];
+
 export function NormalPortfolio() {
+  const [activeRoleIndex, setActiveRoleIndex] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+
+    const roleInterval = window.setInterval(() => {
+      setActiveRoleIndex((currentIndex) =>
+        (currentIndex + 1) % rotatingRoles.length
+      );
+    }, 2200);
+
+    return () => window.clearInterval(roleInterval);
+  }, [prefersReducedMotion]);
 
   const data = {
     name: "Dhruv Bhagatkar",
@@ -141,7 +168,10 @@ export function NormalPortfolio() {
         "JNDI",
         "Hardhat",
       ],
-      databases: ["Oracle DB (connectivity across hosts)"],
+      databases: [
+        "Oracle DB (connectivity across hosts)",
+        "Redis",
+      ],
       cloud_platforms: [
         "Kubernetes (pod management, debugging)",
       ],
@@ -335,9 +365,46 @@ export function NormalPortfolio() {
                     <h3 className="text-3xl font-black uppercase">
                       {exp.company}
                     </h3>
-                    <p className="text-xl font-bold text-[#FF90E8] [text-shadow:1px_1px_0px_#000] mt-1">
-                      {exp.role}
-                    </p>
+                    {idx === 0 ? (
+                      <div
+                        className="inline-grid text-xl font-bold text-[#FF90E8] [text-shadow:1px_1px_0px_#000] mt-1 overflow-hidden"
+                        aria-live="polite"
+                      >
+                        <span
+                          className="invisible col-start-1 row-start-1 whitespace-nowrap"
+                          aria-hidden="true"
+                        >
+                          Professional Log Archaeologist
+                        </span>
+                        <AnimatePresence mode="wait" initial={false}>
+                          <motion.span
+                            key={rotatingRoles[activeRoleIndex]}
+                            initial={
+                              prefersReducedMotion
+                                ? false
+                                : { y: "110%", opacity: 0 }
+                            }
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={
+                              prefersReducedMotion
+                                ? undefined
+                                : { y: "-110%", opacity: 0 }
+                            }
+                            transition={{
+                              duration: 0.38,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                            className="col-start-1 row-start-1 whitespace-nowrap"
+                          >
+                            {rotatingRoles[activeRoleIndex]}
+                          </motion.span>
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      <p className="text-xl font-bold text-[#FF90E8] [text-shadow:1px_1px_0px_#000] mt-1">
+                        {exp.role}
+                      </p>
+                    )}
                   </div>
                   <div className="bg-black text-white font-black px-4 py-2 border-2 border-black uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(255,201,0,1)]">
                     {exp.duration}
