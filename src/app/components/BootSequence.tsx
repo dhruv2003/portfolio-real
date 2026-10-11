@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const BOOT_LINES = [
@@ -12,14 +12,28 @@ const BOOT_LINES = [
 ];
 
 const SESSION_KEY = 'boot_shown';
+const FADE_AT = 1000;
+const EXIT_DURATION = 0.38;
+
+const alreadyBooted = () => {
+  try {
+    return sessionStorage.getItem(SESSION_KEY) !== null;
+  } catch {
+    return false;
+  }
+};
 
 export function BootSequence({ onComplete }: { onComplete: () => void }) {
+  const [skip] = useState(alreadyBooted);
   const [visibleLines, setVisibleLines] = useState<number>(0);
   const [fadeOut, setFadeOut] = useState(false);
+  // Parent may pass a fresh callback each render; don't restart the sequence for it
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    if (sessionStorage.getItem(SESSION_KEY)) {
-      onComplete();
+    if (skip) {
+      onCompleteRef.current();
       return;
     }
 
@@ -29,22 +43,27 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
       timers.push(setTimeout(() => setVisibleLines(i + 1), line.delay));
     });
 
-    timers.push(setTimeout(() => setFadeOut(true), 1000));
+    timers.push(setTimeout(() => setFadeOut(true), FADE_AT));
     timers.push(setTimeout(() => {
-      sessionStorage.setItem(SESSION_KEY, '1');
-      onComplete();
-    }, 1300));
+      try {
+        sessionStorage.setItem(SESSION_KEY, '1');
+      } catch {}
+      onCompleteRef.current();
+    }, FADE_AT + EXIT_DURATION * 1000));
 
     return () => timers.forEach(clearTimeout);
-  }, [onComplete]);
+  }, [skip]);
+
+  if (skip) return null;
 
   return (
     <AnimatePresence>
       {!fadeOut && (
         <motion.div
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
+          // CRT switch-off: the screen collapses to a line and hands over to the hero headline
+          initial={{ clipPath: 'inset(0% 0% 0% 0%)' }}
+          exit={{ clipPath: ['inset(0% 0% 0% 0%)', 'inset(49.5% 0% 49.5% 0%)', 'inset(49.5% 50% 49.5% 50%)'] }}
+          transition={{ duration: EXIT_DURATION, times: [0, 0.6, 1], ease: 'easeIn' }}
           className="fixed inset-0 z-[100] bg-black flex flex-col justify-center px-8 sm:px-16 md:px-24"
         >
           <div className="max-w-2xl">
