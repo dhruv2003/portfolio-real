@@ -49,3 +49,8 @@ export function transitionClick(e: MouseEvent<HTMLElement>, to: string, color: s
   }
   startRouteTransition(to, color, label, x, y);
 }
+
+const FILL_NAMES: Record<string, string> = { '#FFC900': 'yellow', '#FF90E8': 'pink', '#38BDF8': 'blue' };
+
+// Lets hacker mode re-tint elements whose brand colour comes from an inline style
+export const hackerFill = (color: string) => FILL_NAMES[color.toUpperCase()];

@@ -17,6 +17,7 @@ import {
 import { Link } from "react-router";
 import { ImageWithFallback } from "../components/media/ImageWithFallback";
 import { trackEvent } from "../../utils/analytics";
+import { transitionClick } from "../../utils/routeTransition";
 
 const rotatingRoles = [
   "Associate Consultant",
@@ -245,6 +246,7 @@ export function NormalPortfolio() {
         <div className="flex items-center gap-2 sm:gap-4 shrink">
           <Link
             to="/"
+            onClick={(e) => transitionClick(e, "/", "#FFC900", "back to base…")}
             className="bg-white border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all shrink-0"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
@@ -255,6 +257,7 @@ export function NormalPortfolio() {
         </div>
         <Link
           to="/chat"
+          onClick={(e) => transitionClick(e, "/chat", "#FF90E8", "waking the bot…")}
           className="hidden sm:inline-flex items-center gap-2 font-bold uppercase tracking-wider bg-[#FF90E8] px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all shrink-0"
         >
           <Terminal className="w-4 h-4" />

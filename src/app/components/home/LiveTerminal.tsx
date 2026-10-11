@@ -7,12 +7,14 @@ import {
   useState,
   type FormEvent,
   type RefObject,
+  useSyncExternalStore,
 } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Toy } from './Toy';
 import { trackEvent } from '../../../utils/analytics';
 import { fireConfetti } from '../../../utils/confetti';
 import { startRouteTransition } from '../../../utils/routeTransition';
+import { getHackerMode, subscribeHackerMode } from '../../../utils/hackerMode';
 
 export type Tone = 'muted' | 'normal' | 'ok' | 'warn' | 'command';
 export type LiveTerminalHandle = { push: (text: string, tone?: Tone) => void };
@@ -75,6 +77,16 @@ export const LiveTerminal = forwardRef<LiveTerminalHandle, LiveTerminalProps>(fu
   );
 
   useImperativeHandle(ref, () => ({ push }), [push]);
+
+  // Narrate hacker mode switching on and off
+  const hackerActive = useSyncExternalStore(subscribeHackerMode, () => getHackerMode().active);
+  const wasHacker = useRef(hackerActive);
+  useEffect(() => {
+    if (hackerActive === wasHacker.current) return;
+    wasHacker.current = hackerActive;
+    lastUserInput.current = Date.now();
+    push(hackerActive ? 'sudo: hacker mode enabled 🕶' : 'hacker session closed', hackerActive ? 'ok' : 'muted');
+  }, [hackerActive, push]);
 
   // Type out the newest line
   const newest = lines[lines.length - 1];
