@@ -109,7 +109,10 @@ html.hacker-mode [class*="bg-[#FFFDF9]"] {
   background-color: var(--hk-bg) !important;
   background-image: radial-gradient(rgba(0, 255, 65, 0.14) 2px, transparent 2px) !important;
 }
-html.hacker-mode [class~="bg-white"] {
+html.hacker-mode [class~="bg-white"],
+html.hacker-mode [class~="bg-[#FFFFFF]"],
+html.hacker-mode [class~="bg-[#E5E5E5]"],
+html.hacker-mode [class*="bg-gray-"] {
   background-color: var(--hk-surface) !important;
 }
 html.hacker-mode [class~="bg-black"] {
