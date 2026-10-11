@@ -85,7 +85,7 @@ html.has-custom-cursor,
 html.has-custom-cursor * {
   cursor: none !important;
 }
-html.hacker-mode .custom-cursor * {
+html.hacker-mode .custom-cursor .cursor-tag {
   background-color: #00ff41 !important;
 }
 
