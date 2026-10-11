@@ -174,16 +174,17 @@ export function HackerMode() {
         )}
       </AnimatePresence>
 
-      {/* Rain: full strength over the black-out, then a faint glow over the themed page */}
+      {/* Rain: full strength over the black-out, then it drops behind the page so it only shows
+          between cards and never runs through text */}
       <AnimatePresence>
         {stage !== 'off' && !reduceMotion && (
           <motion.div
             key="rain"
             aria-hidden="true"
-            className="hk-overlay fixed inset-0 z-[181] pointer-events-none mix-blend-screen"
+            className={`hk-overlay fixed inset-0 pointer-events-none ${stage === 'burst' ? 'z-[181] mix-blend-screen' : 'z-[-1]'}`}
             initial={{ opacity: 1 }}
             animate={{
-              opacity: stage === 'burst' ? 1 : stage === 'ambient' ? 0.22 : 0,
+              opacity: stage === 'burst' ? 1 : stage === 'ambient' ? 0.35 : 0,
               transition: { duration: stage === 'exit' ? 0.25 : 0.9, ease: 'easeOut' },
             }}
             exit={{ opacity: 0 }}

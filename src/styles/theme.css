@@ -105,8 +105,10 @@ html.hacker-mode body {
 }
 
 /* Surfaces */
+/* Page shells go see-through so the background rain (behind the page) shows between cards;
+   the dark base comes from html/body */
 html.hacker-mode [class*="bg-[#FFFDF9]"] {
-  background-color: var(--hk-bg) !important;
+  background-color: transparent !important;
   background-image: radial-gradient(rgba(0, 255, 65, 0.14) 2px, transparent 2px) !important;
 }
 html.hacker-mode [class~="bg-white"],
