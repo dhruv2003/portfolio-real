@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import {
   clearRouteTransition,
   getRouteTransition,
+  hackerFill,
   subscribeRouteTransition,
 } from '../../utils/routeTransition';
 
@@ -31,6 +32,7 @@ export function RouteTransition({ navigate }: { navigate: (to: string) => void }
     <motion.div
       key={transition.id}
       aria-hidden="true"
+      data-hk-fill={hackerFill(color)}
       className="fixed inset-0 z-[150] flex items-center justify-center border-black"
       style={{ backgroundColor: color }}
       initial={{ clipPath: `circle(0px at ${x}px ${y}px)`, y: '0%' }}

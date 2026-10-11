@@ -1,51 +1,28 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect } from 'react';
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
-import { initGA, trackPageView, trackEvent } from '../utils/analytics';
+import { initGA, trackPageView } from '../utils/analytics';
+import { activateHackerMode, toggleHackerMode } from '../utils/hackerMode';
 import { useKonamiCode } from '../hooks/useKonamiCode';
 import { CustomCursor } from './components/CustomCursor';
+import { HackerMode } from './components/HackerMode';
 import { RouteTransition } from './components/RouteTransition';
-
-const GLITCH_MS = 450;
-const HACKER_MODE_MS = 10000;
 
 const navigateTo = (to: string) => {
   router.navigate(to);
 };
 
-// Scanline sweep + jitter; `swap` runs mid-glitch so the theme change hides inside it
-function glitch(swap: () => void) {
-  const root = document.documentElement;
-  root.classList.remove('hacker-glitch');
-  void root.offsetWidth; // restart the CSS animation
-  root.classList.add('hacker-glitch');
-  window.setTimeout(swap, GLITCH_MS / 3);
-  window.setTimeout(() => root.classList.remove('hacker-glitch'), GLITCH_MS);
-}
-
 export default function App() {
   useKonamiCode();
 
-  const hackerTimer = useRef<number | undefined>(undefined);
-  const activateHackerMode = useCallback(() => {
-    const root = document.documentElement;
-    trackEvent('easter_egg', { egg: 'hacker_mode' });
-    if (!root.classList.contains('hacker-mode')) glitch(() => root.classList.add('hacker-mode'));
-    window.clearTimeout(hackerTimer.current);
-    hackerTimer.current = window.setTimeout(
-      () => glitch(() => root.classList.remove('hacker-mode')),
-      HACKER_MODE_MS
-    );
-  }, []);
-
-  // Desktop: ~ key
+  // Desktop: ~ key toggles
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '`' || e.key === '~') activateHackerMode();
+      if (e.key === '`' || e.key === '~') toggleHackerMode();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activateHackerMode]);
+  }, []);
 
   // Android: volume up + down held for 5s
   useEffect(() => {
@@ -87,7 +64,7 @@ export default function App() {
       window.removeEventListener('keyup', onUp);
       if (timer) clearTimeout(timer);
     };
-  }, [activateHackerMode]);
+  }, []);
 
   // Mobile: flip upside down to activate
   useEffect(() => {
@@ -123,7 +100,7 @@ export default function App() {
       window.addEventListener('deviceorientation', handleOrientation);
       return () => window.removeEventListener('deviceorientation', handleOrientation);
     }
-  }, [activateHackerMode]);
+  }, []);
 
   useEffect(() => {
     // Initialize Google Analytics using your exact ID
@@ -157,6 +134,7 @@ export default function App() {
     <>
       <RouterProvider router={router} />
       <RouteTransition navigate={navigateTo} />
+      <HackerMode />
       <CustomCursor />
     </>
   );

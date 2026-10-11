@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useSpring, 
 import { ArrowUpRight, LayoutDashboard, MessageSquare, Terminal } from 'lucide-react';
 import { Link } from 'react-router';
 import { trackEvent } from '../../../utils/analytics';
-import { transitionClick } from '../../../utils/routeTransition';
+import { hackerFill, transitionClick } from '../../../utils/routeTransition';
 
 type Kind = 'chat' | 'manual' | 'cli';
 
@@ -94,6 +94,7 @@ export function PathCard({
 
   return (
     <motion.div
+      data-hk-fill={hackerFill(color)}
       className="h-full border-4 border-black group text-left"
       style={{ backgroundColor: color, boxShadow, rotateX: canTilt ? rotateX : 0, rotateY: canTilt ? rotateY : 0 }}
       whileHover={reduceMotion ? undefined : { y: -8 }}

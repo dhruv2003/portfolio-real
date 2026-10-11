@@ -85,67 +85,124 @@ html.has-custom-cursor,
 html.has-custom-cursor * {
   cursor: none !important;
 }
-html.hacker-mode .custom-cursor .cursor-tag {
-  background-color: #00ff41 !important;
+/* Hacker mode
+ * Targets the handful of colour utilities the site actually uses instead of restyling every
+ * element: no per-element glow, fills keep their shape as dark green tints. Overlays and the
+ * rain live in HackerMode.tsx. */
+html.hacker-mode {
+  --hk-green: #00ff41;
+  --hk-dim: #00b32d;
+  --hk-bg: #030803;
+  --hk-surface: #08160b;
+  --hk-ink: #0e3316;
+  --hk-shadow: rgba(0, 255, 65, 0.35);
+  color-scheme: dark;
+  background-color: var(--hk-bg);
+}
+html.hacker-mode body {
+  background-color: var(--hk-bg);
+  color: var(--hk-green);
 }
 
-/* Hacker mode */
-html.hacker-glitch::after {
+/* Surfaces */
+html.hacker-mode [class*="bg-[#FFFDF9]"] {
+  background-color: var(--hk-bg) !important;
+  background-image: radial-gradient(rgba(0, 255, 65, 0.14) 2px, transparent 2px) !important;
+}
+html.hacker-mode [class~="bg-white"] {
+  background-color: var(--hk-surface) !important;
+}
+html.hacker-mode [class~="bg-black"] {
+  background-color: var(--hk-ink) !important;
+}
+html.hacker-mode [class~="bg-[#FFC900]"],
+html.hacker-mode [data-hk-fill="yellow"] {
+  background-color: #1c4a12 !important;
+}
+html.hacker-mode [class~="bg-[#FF90E8]"],
+html.hacker-mode [data-hk-fill="pink"] {
+  background-color: #0f3d27 !important;
+}
+html.hacker-mode [class~="bg-[#38BDF8]"],
+html.hacker-mode [data-hk-fill="blue"] {
+  background-color: #0b3832 !important;
+}
+html.hacker-mode [class*="bg-[#7CFF6B]"] {
+  background-color: #1f6b25 !important;
+}
+html.hacker-mode [class*="hover:bg-["]:hover,
+html.hacker-mode [class*="hover:bg-black"]:hover,
+html.hacker-mode .group:hover [class*="group-hover:bg-"] {
+  background-color: #1f6b25 !important;
+}
+
+/* Ink */
+html.hacker-mode [class*="text-black"],
+html.hacker-mode [class*="text-white"],
+html.hacker-mode [class*="text-[#"],
+html.hacker-mode [class*="text-green-"],
+html.hacker-mode input,
+html.hacker-mode textarea {
+  color: var(--hk-green) !important;
+}
+html.hacker-mode [class*="text-gray-"],
+html.hacker-mode ::placeholder {
+  color: var(--hk-dim) !important;
+}
+html.hacker-mode [class*="border-black"] {
+  border-color: var(--hk-green) !important;
+}
+html.hacker-mode [class*="shadow-["],
+html.hacker-mode [data-hk-fill] {
+  box-shadow: 4px 4px 0 0 var(--hk-shadow) !important;
+}
+/* Glow only on the few big headings: blurred text is expensive to repaint on phones */
+html.hacker-mode h1,
+html.hacker-mode h2 {
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.55);
+}
+html.hacker-mode img {
+  filter: grayscale(1) contrast(1.1) sepia(1) hue-rotate(65deg) saturate(2.5) brightness(0.9);
+}
+html.hacker-mode ::selection {
+  background-color: var(--hk-green);
+  color: #000;
+}
+html.hacker-mode .custom-cursor .cursor-tag {
+  background-color: var(--hk-green) !important;
+}
+
+/* CRT: one static fixed layer of scanlines + vignette */
+html.hacker-mode body::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 170;
   pointer-events: none;
   background:
-    repeating-linear-gradient(to bottom, rgba(0, 255, 65, 0.16) 0 2px, transparent 2px 4px),
-    linear-gradient(to bottom, transparent 40%, rgba(0, 255, 65, 0.55) 50%, transparent 60%);
-  background-size: 100% 4px, 100% 300%;
-  animation: hacker-scan 450ms linear forwards;
-}
-html.hacker-glitch #root {
-  animation: hacker-jitter 450ms steps(6) forwards;
-}
-@keyframes hacker-scan {
-  from { background-position: 0 0, 0 100%; opacity: 1; }
-  to { background-position: 0 0, 0 0%; opacity: 0; }
-}
-@keyframes hacker-jitter {
-  0% { transform: none; filter: none; }
-  20% { transform: translate(-4px, 1px) skewX(-2deg); filter: hue-rotate(90deg) saturate(3); }
-  40% { transform: translate(3px, -2px); }
-  60% { transform: translate(-2px, 0) skewX(1deg); filter: invert(0.1); }
-  80% { transform: translate(1px, 1px); }
-  100% { transform: none; filter: none; }
+    repeating-linear-gradient(to bottom, rgba(0, 255, 65, 0.05) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.6) 100%);
 }
 
-.hacker-mode {
-  filter: none !important;
+.hk-chip {
+  background: #000;
+  color: #00ff41;
+  border: 2px solid #00ff41;
+  box-shadow: 4px 4px 0 0 rgba(0, 255, 65, 0.35);
 }
-.hacker-mode * {
-  color: #00ff41 !important;
-  border-color: #00ff41 !important;
-  background-color: #0a0a0a !important;
-  text-shadow: 0 0 5px #00ff41 !important;
-  box-shadow: none !important;
+.hk-chip button {
+  border-left: 2px solid #00ff41;
 }
-.hacker-mode .bg-white,
-.hacker-mode [class*="bg-white"] {
-  background-color: #0d0d0d !important;
+.hk-chip button:focus-visible {
+  background: #00ff41;
+  color: #000;
+  outline: none;
 }
-.hacker-mode .bg-black,
-.hacker-mode [class*="bg-black"] {
-  background-color: #001100 !important;
-}
-.hacker-mode .bg-\\[\\#FFC900\\],
-.hacker-mode .bg-\\[\\#FF90E8\\],
-.hacker-mode .bg-\\[\\#38BDF8\\] {
-  background-color: #003300 !important;
-}
-.hacker-mode img {
-  filter: grayscale(1) brightness(0.3) !important;
-}
-.hacker-mode .selection\:bg-\\[\\#FFC900\\]::selection {
-  background-color: #00ff41 !important;
+@media (hover: hover) {
+  .hk-chip button:hover {
+    background: #00ff41;
+    color: #000;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
