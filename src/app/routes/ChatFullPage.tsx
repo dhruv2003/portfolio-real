@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
 import { trackEvent } from '../../utils/analytics';
+import { transitionClick } from "../../utils/routeTransition";
 import { SafeMarkdown } from '../../components/SafeMarkdown';
 import {
   askChat,
@@ -100,6 +101,7 @@ export function ChatFullPage() {
         <div className="flex items-center gap-3 sm:gap-6">
           <Link
             to="/"
+            onClick={(e) => transitionClick(e, "/", "#FFC900", "back to base…")}
             className="bg-white border-2 border-black p-1.5 sm:p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all group shrink-0"
           >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-black group-hover:-translate-x-1 transition-transform" />

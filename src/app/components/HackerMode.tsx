@@ -19,8 +19,9 @@ type Stage = 'off' | 'burst' | 'ambient' | 'exit';
 
 const randomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
 
-// Canvas digital rain. Runs at 30fps during the intro burst and 15fps once it settles in the background.
-function MatrixRain({ fast }: { fast: boolean }) {
+// Canvas digital rain. Runs at 30fps when `fast` (intro burst, page changes) and 15fps as a background.
+// `prefill` starts with columns already mid-screen so the rain looks full from the first frame.
+export function MatrixRain({ fast, prefill = false }: { fast: boolean; prefill?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fastRef = useRef(fast);
   fastRef.current = fast;
@@ -48,7 +49,11 @@ function MatrixRain({ fast }: { fast: boolean }) {
       ctx.font = `bold ${FONT_SIZE}px ui-monospace, SFMono-Regular, Menlo, monospace`;
       ctx.textBaseline = 'top';
       const columns = Math.ceil(width / FONT_SIZE);
-      drops = Array.from({ length: columns }, (_, i) => drops[i] ?? -Math.floor(Math.random() * 40));
+      const rows = Math.ceil(height / FONT_SIZE);
+      drops = Array.from(
+        { length: columns },
+        (_, i) => drops[i] ?? (prefill ? Math.floor(Math.random() * rows) : -Math.floor(Math.random() * 40))
+      );
       heads = Array.from({ length: columns }, (_, i) => heads[i] ?? randomGlyph());
       secret = Array.from({ length: columns }, (_, i) => secret[i] ?? (Math.random() < 0.04 ? 0 : null));
     };

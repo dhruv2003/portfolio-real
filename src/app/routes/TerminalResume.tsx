@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Download, Send, Terminal } from "lucide-react";
 import { Link } from "react-router";
 import { trackEvent } from "../../utils/analytics";
+import { transitionClick } from "../../utils/routeTransition";
 import { fireConfetti } from "../../utils/confetti";
 
 type TerminalLine = {
@@ -143,7 +144,7 @@ export function TerminalResume() {
     <div className="h-screen max-h-screen overflow-hidden bg-[#FFFDF9] text-black font-sans selection:bg-[#FFC900] selection:text-black flex flex-col">
       <header className="shrink-0 z-50 bg-white border-b-4 border-black px-3 sm:px-6 lg:px-8 py-3 flex justify-between items-center gap-3">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Link to="/" aria-label="Back to home" className="shrink-0 bg-white border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
+          <Link to="/" aria-label="Back to home" onClick={(e) => transitionClick(e, "/", "#FFC900", "back to base…")} className="shrink-0 bg-white border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="font-black text-xs sm:text-lg uppercase tracking-widest bg-[#FFC900] px-2.5 sm:px-3 py-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] truncate">
