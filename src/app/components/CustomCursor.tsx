@@ -41,11 +41,13 @@ function IBeam() {
 export function CustomCursor() {
   const finePointer = useMediaQuery(FINE_POINTER);
   const [variant, setVariant] = useState<Variant>('hidden');
-  // The pointer itself tracks the mouse 1:1; only the context badge trails behind on a spring
+  // Arrow glides after the mouse on a tight spring; the badge trails a touch further behind it
   const x = useMotionValue(-100);
   const y = useMotionValue(-100);
-  const badgeX = useSpring(x, { stiffness: 900, damping: 45, mass: 0.3 });
-  const badgeY = useSpring(y, { stiffness: 900, damping: 45, mass: 0.3 });
+  const springX = useSpring(x, { stiffness: 1200, damping: 60, mass: 0.25 });
+  const springY = useSpring(y, { stiffness: 1200, damping: 60, mass: 0.25 });
+  const badgeX = useSpring(x, { stiffness: 700, damping: 40, mass: 0.35 });
+  const badgeY = useSpring(y, { stiffness: 700, damping: 40, mass: 0.35 });
 
   useEffect(() => {
     if (!finePointer) return;
@@ -100,15 +102,18 @@ export function CustomCursor() {
 
   return (
     <div aria-hidden="true" className={`custom-cursor ${variant === 'hidden' ? 'opacity-0' : ''}`}>
-      <motion.div className="fixed top-0 left-0 z-[400] pointer-events-none" style={{ x, y }}>
+      <motion.div className="fixed top-0 left-0 z-[400] pointer-events-none" style={{ x: springX, y: springY }}>
         {variant === 'text' ? (
           <IBeam />
         ) : (
           <motion.div
             className="origin-top-left"
             initial={false}
-            animate={{ scale: variant === 'grabbing' ? 0.85 : 1, rotate: variant === 'grabbing' ? -8 : 0 }}
-            transition={{ type: 'spring', stiffness: 700, damping: 30 }}
+            animate={{
+              scale: variant === 'grabbing' ? 0.85 : variant === 'link' || variant === 'grab' ? 1.12 : 1,
+              rotate: variant === 'grabbing' ? -14 : variant === 'link' ? -10 : variant === 'grab' ? 8 : 0,
+            }}
+            transition={{ type: 'spring', stiffness: 600, damping: 18 }}
           >
             <Arrow />
           </motion.div>
