@@ -80,7 +80,44 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Custom cursor (fine pointers only, toggled from CustomCursor.tsx) */
+html.has-custom-cursor,
+html.has-custom-cursor * {
+  cursor: none !important;
+}
+html.hacker-mode .custom-cursor .cursor-tag {
+  background-color: #00ff41 !important;
+}
+
 /* Hacker mode */
+html.hacker-glitch::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 255, 65, 0.16) 0 2px, transparent 2px 4px),
+    linear-gradient(to bottom, transparent 40%, rgba(0, 255, 65, 0.55) 50%, transparent 60%);
+  background-size: 100% 4px, 100% 300%;
+  animation: hacker-scan 450ms linear forwards;
+}
+html.hacker-glitch #root {
+  animation: hacker-jitter 450ms steps(6) forwards;
+}
+@keyframes hacker-scan {
+  from { background-position: 0 0, 0 100%; opacity: 1; }
+  to { background-position: 0 0, 0 0%; opacity: 0; }
+}
+@keyframes hacker-jitter {
+  0% { transform: none; filter: none; }
+  20% { transform: translate(-4px, 1px) skewX(-2deg); filter: hue-rotate(90deg) saturate(3); }
+  40% { transform: translate(3px, -2px); }
+  60% { transform: translate(-2px, 0) skewX(1deg); filter: invert(0.1); }
+  80% { transform: translate(1px, 1px); }
+  100% { transform: none; filter: none; }
+}
+
 .hacker-mode {
   filter: none !important;
 }

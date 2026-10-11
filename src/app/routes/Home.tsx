@@ -1,20 +1,79 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, useAnimation, AnimatePresence } from 'motion/react';
-import { ArrowUpRight, Terminal, LayoutDashboard, ArrowDown } from 'lucide-react';
+import {
+  motion,
+  AnimatePresence,
+  useAnimationControls,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+  type PanInfo,
+} from 'motion/react';
+import { Terminal, LayoutDashboard, ArrowDown, MessageSquare, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router';
 import { trackEvent } from "../../utils/analytics";
 import { fireConfetti } from "../../utils/confetti";
+import { transitionClick } from "../../utils/routeTransition";
+import { FINE_POINTER, useMediaQuery } from "../../hooks/useMediaQuery";
+import { useShake } from "../../hooks/useShake";
 import { BootSequence } from "../components/BootSequence";
 import { ContextMenu } from "../components/ContextMenu";
+import { Toy, type ToyHandle } from "../components/home/Toy";
+import { LiveTerminal, type LiveTerminalHandle } from "../components/home/LiveTerminal";
+import { Marquee } from "../components/home/Marquee";
+import { WiggleWord } from "../components/home/WiggleWord";
+import { PathCard } from "../components/home/PathCard";
+import { DeployButton } from "../components/home/DeployButton";
 
 const TYPING_WORDS = ["Backend", "Infrastructure", "Glue Work"];
 const TYPING_SPEED = 40;
 const DELETING_SPEED = 20;
 const PAUSE_AFTER_TYPE = 350;
-const PAUSE_AFTER_DELETE = 100;
+
+const MARQUEE_WORDS = ["DEVOPS ENGINEER", "ORACLE EXPERT", "KUBERNETES", "ASSOCIATE CONSULTANT", "SYSTEM DESIGN", "OBSERVABILITY", "BASH", "JAVA", "PYTHON", "BRUH", "HOW COOL IS THIS??", "THIS IS AWESOME", "I AM A GENIUS", "WELL I SURVIVED ORACLE LAYOFFS"];
+
+const WORD_REACTIONS: Record<string, { line?: string; toast?: string }> = {
+  "DEVOPS ENGINEER": { line: "role=devops ✓ pipelines green" },
+  "ORACLE EXPERT": { line: "SELECT * FROM skills WHERE vendor='oracle'" },
+  "KUBERNETES": { line: "kubectl get nodes → 3 Ready" },
+  "ASSOCIATE CONSULTANT": { line: "title loaded: associate consultant" },
+  "SYSTEM DESIGN": { line: "drawing boxes and arrows..." },
+  "OBSERVABILITY": { line: "traces: 100% sampled, 0 regrets" },
+  "BASH": { line: "set -euo pipefail ✓" },
+  "JAVA": { line: "AbstractSingletonProxyFactoryBean ok" },
+  "PYTHON": { line: "import antigravity ✓" },
+  "BRUH": { toast: "bruh." },
+  "HOW COOL IS THIS??": { toast: "very. thanks for asking." },
+  "THIS IS AWESOME": { toast: "agreed 🤝" },
+  "I AM A GENIUS": { toast: "[citation needed]" },
+  "WELL I SURVIVED ORACLE LAYOFFS": { toast: "🫡 respect." },
+};
+
+const NAV = {
+  terminal: { to: "/terminal", color: "#FFC900", label: "booting shell…" },
+  chat: { to: "/chat", color: "#FF90E8", label: "waking the bot…" },
+  normal: { to: "/normal", color: "#38BDF8", label: "printing resume…" },
+};
+
+const IDLE_AFTER = 10000;
+const ROLLBACK_SPEED = 1800;
+const EDGE_MARGIN = 40;
+
+const centerOf = (el: Element) => {
+  const r = el.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+};
+const contains = (el: Element, p: { x: number; y: number }) => {
+  const r = el.getBoundingClientRect();
+  return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
+};
 
 export function Home() {
-  const [dragText, setDragText] = useState("Drag Me");
+  const reduceMotion = useReducedMotion();
+  const finePointer = useMediaQuery(FINE_POINTER);
+  const isMobile = useMediaQuery('(max-width: 639px)');
+  const shadow = isMobile ? 4 : 8;
+
   const [logoClicks, setLogoClicks] = useState(0);
   const [logoToast, setLogoToast] = useState(false);
   const [bootDone, setBootDone] = useState(false);
@@ -22,69 +81,93 @@ export function Home() {
   const [wordIdx, setWordIdx] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const credibilityRef = useRef<HTMLDivElement>(null);
-  const marqueeControls = useAnimation();
-  const words = ["DEVOPS ENGINEER", "ORACLE EXPERT", "KUBERNETES", "ASSOCIATE CONSULTANT", "SYSTEM DESIGN", "OBSERVABILITY", "BASH", "JAVA", "PYTHON", "BRUH", "HOW COOL IS THIS??", "THIS IS AWESOME", "I AM A GENIUS","WELL I SURVIVED ORACLE LAYOFFS"];
+  const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
 
-  // Typing animation
+  const pageRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const credibilityRef = useRef<HTMLDivElement>(null);
+  const terminalRef = useRef<LiveTerminalHandle>(null);
+  const toastTimer = useRef<number | undefined>(undefined);
+
+  const showToast = useCallback((text: string) => {
+    window.clearTimeout(toastTimer.current);
+    setToast({ id: Date.now(), text });
+    toastTimer.current = window.setTimeout(() => setToast(null), 2200);
+  }, []);
+  useEffect(() => () => window.clearTimeout(toastTimer.current), []);
+
+  const onBootComplete = useCallback(() => setBootDone(true), []);
+
+  // Typing animation (skipped entirely for reduced motion)
   useEffect(() => {
+    if (reduceMotion) {
+      setShowAll(true);
+      return;
+    }
     if (!bootDone || showAll) return;
     const currentWord = TYPING_WORDS[wordIdx];
+    const wordDone = !isDeleting && typedText === currentWord;
 
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        if (typedText.length < currentWord.length) {
-          setTypedText(currentWord.slice(0, typedText.length + 1));
-        } else {
-          setTimeout(() => setIsDeleting(true), PAUSE_AFTER_TYPE);
-        }
+    const timeout = window.setTimeout(() => {
+      if (wordDone) {
+        setIsDeleting(true);
+      } else if (!isDeleting) {
+        setTypedText(currentWord.slice(0, typedText.length + 1));
+      } else if (typedText.length > 0) {
+        setTypedText(typedText.slice(0, -1));
       } else {
-        if (typedText.length > 0) {
-          setTypedText(typedText.slice(0, -1));
-        } else {
-          setIsDeleting(false);
-          if (wordIdx < TYPING_WORDS.length - 1) {
-            setWordIdx(wordIdx + 1);
-          } else {
-            setShowAll(true);
-          }
-        }
+        setIsDeleting(false);
+        if (wordIdx < TYPING_WORDS.length - 1) setWordIdx(wordIdx + 1);
+        else setShowAll(true);
       }
-    }, isDeleting ? DELETING_SPEED : TYPING_SPEED);
+    }, wordDone ? PAUSE_AFTER_TYPE : isDeleting ? DELETING_SPEED : TYPING_SPEED);
 
-    return () => clearTimeout(timeout);
-  }, [typedText, isDeleting, wordIdx, showAll, bootDone]);
+    return () => window.clearTimeout(timeout);
+  }, [typedText, isDeleting, wordIdx, showAll, bootDone, reduceMotion]);
 
-  // Start marquee on mount
+  // Headline lands: shake the hero a little when the Infrastructure block hits
+  const heroShake = useAnimationControls();
   useEffect(() => {
-    marqueeControls.start({ x: [0, -1000] });
-  }, [marqueeControls]);
+    if (!showAll || reduceMotion) return;
+    const t = window.setTimeout(() => {
+      heroShake.start({ x: [0, -6, 5, -3, 2, 0], y: [0, 2, -2, 1, 0, 0], transition: { duration: 0.35 } });
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [showAll, reduceMotion, heroShake]);
 
-  // Parallax scroll + depth tracking
+  // Scroll-linked motion values: no React re-render per scroll frame
+  const { scrollY, scrollYProgress } = useScroll();
+  const flags = useRef({ isMobile, reduceMotion });
+  flags.current = { isMobile, reduceMotion };
+  const parallaxSource = useTransform(scrollY, (v) =>
+    flags.current.reduceMotion ? 0 : flags.current.isMobile ? Math.min(v, 120) : v
+  );
+  const p10 = useTransform(parallaxSource, (v) => v * -0.1);
+  const p15 = useTransform(parallaxSource, (v) => v * -0.15);
+  const p20 = useTransform(parallaxSource, (v) => v * -0.2);
+  const p25 = useTransform(parallaxSource, (v) => v * -0.25);
+  const p30 = useTransform(parallaxSource, (v) => v * -0.3);
+  const infraSway = useTransform(parallaxSource, [0, 600], [1, -2]);
+
+  // Scroll depth analytics + terminal narration
   const scrollDepthFired = useRef(new Set<number>());
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-
-  const handleScroll = useCallback(() => {
-    const raw = document.documentElement.scrollTop;
-    setScrollY(isMobile ? Math.min(raw, 120) : raw);
-
-    const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    if (docHeight <= 0) return;
-    const pct = Math.round((raw / docHeight) * 100);
-
+  const stagesFired = useRef(new Set<number>());
+  useMotionValueEvent(scrollYProgress, 'change', (progress) => {
+    const pct = Math.round(progress * 100);
     [25, 50, 75, 100].forEach((threshold) => {
       if (pct >= threshold && !scrollDepthFired.current.has(threshold)) {
         scrollDepthFired.current.add(threshold);
         trackEvent('scroll_depth', { depth: threshold });
       }
     });
-  }, [isMobile]);
 
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+    const stage = progress >= 0.45 ? 2 : progress >= 0.12 ? 1 : 0;
+    if (stage && !stagesFired.current.has(stage)) {
+      stagesFired.current.add(stage);
+      if (stage === 1) terminalRef.current?.push('traffic detected: 1 visitor (hi 👋)', 'normal');
+      if (stage === 2) terminalRef.current?.push('✓ ready, choose a path ↓', 'ok');
+    }
+  });
 
   // Time to first interaction
   useEffect(() => {
@@ -97,14 +180,163 @@ export function Home() {
     return () => window.removeEventListener('click', trackFirst);
   }, []);
 
+  // Living dot grid: dots grow near the cursor and the grid drifts slightly against it
+  useEffect(() => {
+    const page = pageRef.current;
+    if (!page || !finePointer || reduceMotion) return;
+    let frame = 0;
+    let last = { x: -999, y: -999 };
+    const paint = () => {
+      frame = 0;
+      const rect = page.getBoundingClientRect();
+      page.style.setProperty('--mx', `${last.x - rect.left}px`);
+      page.style.setProperty('--my', `${last.y - rect.top}px`);
+      page.style.setProperty('--px', `${(last.x / window.innerWidth - 0.5) * -10}px`);
+      page.style.setProperty('--py', `${(last.y / window.innerHeight - 0.5) * -10}px`);
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(paint); };
+    const onMove = (e: PointerEvent) => { last = { x: e.clientX, y: e.clientY }; schedule(); };
+    const onLeave = () => { last = { x: -999, y: -999 }; schedule(); };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('scroll', schedule, { passive: true });
+    document.documentElement.addEventListener('mouseleave', onLeave);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('scroll', schedule);
+      document.documentElement.removeEventListener('mouseleave', onLeave);
+    };
+  }, [finePointer, reduceMotion]);
+
+  // ---- Toys ----
+  const circleRef = useRef<ToyHandle>(null);
+  const squareRef = useRef<ToyHandle>(null);
+  const diamondRef = useRef<ToyHandle>(null);
+  const ringRef = useRef<ToyHandle>(null);
+  const barRef = useRef<ToyHandle>(null);
+  const zoneRef = useRef<HTMLDivElement>(null);
+  const [messy, setMessy] = useState(false);
+  const [circleText, setCircleText] = useState("Drag Me");
+  const [circleAsleep, setCircleAsleep] = useState(false);
+  const [circleDragging, setCircleDragging] = useState(false);
+  const [zoneHot, setZoneHot] = useState(false);
+  const [deployed, setDeployed] = useState(false);
+  const [circleActivity, setCircleActivity] = useState(0);
+
+  // Leave the circle alone for a while and it scales to zero
+  useEffect(() => {
+    if (!bootDone || reduceMotion) return;
+    const t = window.setTimeout(() => {
+      setCircleAsleep(true);
+      setCircleText("idle… scaling to zero 💤");
+    }, IDLE_AFTER);
+    return () => window.clearTimeout(t);
+  }, [bootDone, reduceMotion, circleActivity]);
+
+  const wakeCircle = (text: string) => {
+    setCircleActivity((n) => n + 1);
+    if (circleAsleep) {
+      setCircleAsleep(false);
+      setCircleText(text);
+    }
+  };
+
+  const tidyUp = useCallback(() => {
+    [circleRef, squareRef, diamondRef, ringRef, barRef].forEach((r) => r.current?.reset());
+    setMessy(false);
+    trackEvent('hero_toys', { action: 'tidy_up' });
+  }, []);
+  useShake(tidyUp, messy);
+
+  const markMoved = (object: string) => {
+    setMessy(true);
+    trackEvent("hero_drag", { object });
+  };
+
+  const deploy = useCallback(() => {
+    if (deployed) {
+      setCircleText("already in prod");
+      terminalRef.current?.push('nothing to do: already deployed', 'muted');
+      return;
+    }
+    setDeployed(true);
+    setCircleText("SHIPPED 🚀");
+    fireConfetti();
+    terminalRef.current?.push('✓ deployed by visitor', 'ok');
+    showToast("You shipped to prod. On a Friday. Respect.");
+    trackEvent('easter_egg', { egg: 'deploy_zone' });
+  }, [deployed, showToast]);
+
+  const onCircleDrag = () => {
+    const zone = zoneRef.current;
+    const el = circleRef.current?.element();
+    if (!zone || !el) return;
+    const hot = contains(zone, centerOf(el));
+    if (hot !== zoneHot) setZoneHot(hot);
+  };
+
+  const onCircleDragEnd = (info: PanInfo) => {
+    setCircleDragging(false);
+    markMoved("yellow_circle");
+    const speed = Math.hypot(info.velocity.x, info.velocity.y);
+    setCircleText(speed > ROLLBACK_SPEED ? "TOO FAST, ROLLBACK" : "OUCH.");
+  };
+
+  const onCircleLand = () => {
+    setZoneHot(false);
+    const el = circleRef.current?.element();
+    const hero = heroRef.current;
+    if (!el || !hero) return;
+    const center = centerOf(el);
+    if (zoneRef.current && contains(zoneRef.current, center)) {
+      deploy();
+      return;
+    }
+    const r = el.getBoundingClientRect();
+    const h = hero.getBoundingClientRect();
+    const nearEdge =
+      r.left - h.left < EDGE_MARGIN || h.right - r.right < EDGE_MARGIN ||
+      r.top - h.top < EDGE_MARGIN || h.bottom - r.bottom < EDGE_MARGIN;
+    if (nearEdge) setCircleText("PAGED AT 3AM");
+  };
+
+  const onMarqueeWord = (word: string) => {
+    const reaction = WORD_REACTIONS[word] ?? {};
+    terminalRef.current?.push(reaction.line ?? `grep -i "${word.toLowerCase()}" → match ✓`, 'normal');
+    if (reaction.toast) showToast(reaction.toast);
+    trackEvent('marquee_click', { word });
+  };
+
+  const navLinkClass = "items-center gap-2 font-bold uppercase tracking-wider text-black px-3 py-1 border-2 border-transparent hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group whitespace-nowrap";
+
   return (
     <>
-      {!bootDone && <BootSequence onComplete={() => setBootDone(true)} />}
+      {!bootDone && <BootSequence onComplete={onBootComplete} />}
       <ContextMenu />
     <div
+      ref={pageRef}
       className="min-h-screen bg-[#FFFDF9] text-black font-sans selection:bg-[#FFC900] selection:text-black flex flex-col relative"
-      style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 2px, transparent 2px)', backgroundSize: '32px 32px' }}
+      style={{
+        backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 2px, transparent 2px)',
+        backgroundSize: '32px 32px',
+        backgroundPosition: 'var(--px, 0px) var(--py, 0px)',
+      }}
     >
+      {/* Dots near the cursor swell up */}
+      {finePointer && !reduceMotion && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(0,0,0,0.45) 3.5px, transparent 3.5px)',
+            backgroundSize: '32px 32px',
+            backgroundPosition: 'var(--px, 0px) var(--py, 0px)',
+            maskImage: 'radial-gradient(circle 170px at var(--mx, -999px) var(--my, -999px), #000 0%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(circle 170px at var(--mx, -999px) var(--my, -999px), #000 0%, transparent 100%)',
+          }}
+        />
+      )}
+
       {/* Header */}
       <motion.header
         initial={{ y: -100 }}
@@ -134,15 +366,15 @@ export function Home() {
             )}
           </div>
           <nav className="flex items-center gap-4 sm:gap-6 shrink-0">
-            <Link to="/terminal" className="hidden md:inline-flex items-center gap-2 font-bold uppercase tracking-wider text-black hover:bg-[#FFC900] px-3 py-1 border-2 border-transparent hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group whitespace-nowrap">
+            <Link to={NAV.terminal.to} onClick={(e) => transitionClick(e, NAV.terminal.to, NAV.terminal.color, NAV.terminal.label)} className={`hidden md:inline-flex hover:bg-[#FFC900] ${navLinkClass}`}>
               <Terminal className="w-4 h-4 shrink-0 group-hover:rotate-12 transition-transform" />
               CLI Resume
             </Link>
-            <Link to="/chat" className="hidden sm:inline-flex items-center gap-2 font-bold uppercase tracking-wider text-black hover:bg-[#FF90E8] px-3 py-1 border-2 border-transparent hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group whitespace-nowrap">
-              <Terminal className="w-4 h-4 shrink-0 group-hover:rotate-12 transition-transform" />
+            <Link to={NAV.chat.to} onClick={(e) => transitionClick(e, NAV.chat.to, NAV.chat.color, NAV.chat.label)} className={`hidden sm:inline-flex hover:bg-[#FF90E8] ${navLinkClass}`}>
+              <MessageSquare className="w-4 h-4 shrink-0 group-hover:rotate-12 transition-transform" />
               Chat
             </Link>
-            <Link to="/normal" className="font-bold text-sm sm:text-base uppercase tracking-wider bg-[#38BDF8] px-3 sm:px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all inline-flex items-center gap-2 group whitespace-nowrap">
+            <Link to={NAV.normal.to} onClick={(e) => transitionClick(e, NAV.normal.to, NAV.normal.color, NAV.normal.label)} className="font-bold text-sm sm:text-base uppercase tracking-wider bg-[#38BDF8] px-3 sm:px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all inline-flex items-center gap-2 group whitespace-nowrap">
               <LayoutDashboard className="w-4 h-4 shrink-0" />
               Resume
             </Link>
@@ -150,77 +382,126 @@ export function Home() {
         </div>
       </motion.header>
 
-      {/* Marquee */}
-      <motion.div
-        className="mt-[80px] bg-black text-white border-b-4 border-black overflow-hidden flex whitespace-nowrap py-4"
-        onHoverStart={() => marqueeControls.stop()}
-        onHoverEnd={() => marqueeControls.start({ x: [0, -1000] })}
-      >
-        <motion.div
-          animate={marqueeControls}
-          initial={{ x: 0 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="flex gap-8 items-center shrink-0 font-black tracking-widest text-xl uppercase"
-        >
-          {[...words, ...words, ...words, ...words].map((word, idx) => (
-            <div key={idx} className="flex items-center gap-8">
-              <span>{word}</span>
-              <span className="text-[#FFC900]">///</span>
-            </div>
-          ))}
-        </motion.div>
-      </motion.div>
+      <Marquee words={MARQUEE_WORDS} onWord={onMarqueeWord} reduceMotion={reduceMotion} />
 
       {/* Main content */}
       <main className="flex-1 relative pb-32">
-        <section className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full min-h-[calc(100vh-140px)] flex flex-col justify-center items-center pt-8 pb-16">
-          
-          {/* Interactive Decorative background elements (Now visible on mobile) */}
-          <motion.div
-            drag
-            whileDrag={{ scale: 1.1, zIndex: 50 }}
-            dragConstraints={{ left: -150, right: 150, top: -100, bottom: 300 }}
-            onDragStart={() => setDragText("WHEEEE!")}
-            onDragEnd={() => {
-              setDragText("OUCH.");
-              trackEvent("hero_drag", { object: "yellow_circle" });
+        <section ref={heroRef} className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full min-h-[calc(100vh-140px)] flex flex-col justify-center items-center pt-8 pb-16">
+
+          {/* Deploy zone: drop the yellow circle here */}
+          <div
+            ref={zoneRef}
+            aria-hidden="true"
+            className={`absolute top-36 sm:top-auto sm:bottom-10 right-2 sm:right-[5%] w-24 h-16 sm:w-40 sm:h-28 border-4 border-dashed flex items-center justify-center text-center font-black uppercase tracking-widest text-[9px] sm:text-xs transition-all duration-300 z-0 ${
+              deployed
+                ? 'border-black bg-[#7CFF6B] opacity-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+                : zoneHot
+                  ? 'border-black bg-[#7CFF6B]/60 opacity-100 scale-105'
+                  : circleDragging
+                    ? 'border-black opacity-100 animate-pulse'
+                    : 'border-black/30 text-black/30 opacity-60'
+            }`}
+          >
+            {deployed ? 'Deployed ✓' : zoneHot ? 'Release to ship!' : 'Deploy zone'}
+          </div>
+
+          <Toy
+            ref={circleRef}
+            constraintsRef={heroRef}
+            reduceMotion={reduceMotion}
+            parallax={p15}
+            className="top-4 sm:top-12 right-2 sm:right-[10%] w-24 h-24 sm:w-48 sm:h-48"
+            bodyClassName="bg-[#FFC900] border-4 border-black rounded-full flex items-center justify-center"
+            shadow={shadow}
+            hoverRotate={12}
+            asleep={circleAsleep}
+            onHoverStart={() => wakeCircle("huh? I'm up!")}
+            onDragStart={() => {
+              wakeCircle("WHEEEE!");
+              setCircleDragging(true);
+              setCircleText("WHEEEE!");
             }}
-            style={{ y: scrollY * -0.15 }}
-            className="absolute top-4 sm:top-12 right-2 sm:right-[10%] w-24 h-24 sm:w-48 sm:h-48 bg-[#FFC900] border-4 border-black rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center cursor-grab active:cursor-grabbing hover:rotate-12 transition-transform z-0"
+            onDrag={onCircleDrag}
+            onDragEnd={onCircleDragEnd}
+            onLand={onCircleLand}
           >
-            <span className="font-black text-[8px] sm:text-xs uppercase rotate-12 bg-white px-1 sm:px-2 py-0.5 sm:py-1 border-2 border-black truncate max-w-[80%] text-center">{dragText}</span>
-          </motion.div>
+            <span className="font-black text-[8px] sm:text-xs uppercase rotate-12 bg-white px-1 sm:px-2 py-0.5 sm:py-1 border-2 border-black truncate max-w-[80%] text-center">{circleText}</span>
+          </Toy>
 
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -150, right: 150, top: -300, bottom: 200 }} onDragEnd={() => trackEvent("hero_drag", { object: "blue_square" })} style={{ y: scrollY * -0.25 }} className="absolute bottom-32 sm:bottom-40 right-4 sm:right-[20%] w-16 h-16 sm:w-32 sm:h-32 bg-[#38BDF8] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:rotate-45 transition-transform duration-700 cursor-grab active:cursor-grabbing rotate-12 z-0" />
+          <Toy
+            ref={squareRef}
+            constraintsRef={heroRef}
+            reduceMotion={reduceMotion}
+            parallax={p25}
+            className="bottom-32 sm:bottom-40 right-4 sm:right-[20%] w-16 h-16 sm:w-32 sm:h-32"
+            bodyClassName="bg-[#38BDF8] border-4 border-black"
+            shadow={shadow}
+            rotate={12}
+            hoverRotate={45}
+            onDragEnd={() => markMoved("blue_square")}
+          />
 
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -50, right: 300, top: -100, bottom: 400 }} style={{ y: scrollY * -0.1 }} className="absolute top-24 sm:top-40 left-4 sm:left-[10%] w-8 h-8 sm:w-12 sm:h-12 bg-black rotate-45 cursor-grab active:cursor-grabbing z-0" />
+          <Toy
+            ref={diamondRef}
+            constraintsRef={heroRef}
+            reduceMotion={reduceMotion}
+            parallax={p10}
+            className="top-24 sm:top-40 left-4 sm:left-[10%] w-8 h-8 sm:w-12 sm:h-12"
+            bodyClassName="bg-black"
+            rotate={45}
+            hoverRotate={90}
+            onDragEnd={() => markMoved("black_diamond")}
+          />
 
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -50, right: 300, top: -400, bottom: 200 }} style={{ y: scrollY * -0.3 }} className="absolute bottom-40 sm:bottom-60 left-8 sm:left-[5%] w-10 h-10 sm:w-16 sm:h-16 border-[4px] sm:border-8 border-black rounded-full cursor-grab active:cursor-grabbing z-0" />
+          <Toy
+            ref={ringRef}
+            constraintsRef={heroRef}
+            reduceMotion={reduceMotion}
+            parallax={p30}
+            className="bottom-40 sm:bottom-60 left-8 sm:left-[5%] w-10 h-10 sm:w-16 sm:h-16"
+            bodyClassName="border-[4px] sm:border-8 border-black rounded-full"
+            onDragEnd={() => markMoved("ring")}
+          />
 
-          <motion.div drag whileDrag={{ scale: 1.1, zIndex: 50 }} dragConstraints={{ left: -100, right: 400, top: -300, bottom: 300 }} style={{ y: scrollY * -0.2 }} className="absolute hidden sm:block top-1/2 left-[15%] w-40 h-10 bg-[#FF90E8] border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] -rotate-6 cursor-grab active:cursor-grabbing z-0" />
+          <Toy
+            ref={barRef}
+            constraintsRef={heroRef}
+            reduceMotion={reduceMotion}
+            parallax={p20}
+            className="hidden sm:block top-1/2 left-[15%] w-40 h-10"
+            bodyClassName="bg-[#FF90E8] border-4 border-black"
+            shadow={8}
+            rotate={-6}
+            hoverRotate={-6}
+            onDragEnd={() => markMoved("pink_bar")}
+          />
 
-          {/* Draggable Terminal Window */}
-          <motion.div 
-            drag 
-            whileDrag={{ scale: 1.05, zIndex: 50, rotate: 0 }} 
-            dragConstraints={{ left: -50, right: 400, top: -100, bottom: 400 }}
-            onDragEnd={() => trackEvent("hero_drag", { object: "terminal_window" })}
-            className="absolute left-2 sm:left-[5%] bottom-20 sm:bottom-auto sm:top-[20%] w-40 sm:w-64 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] cursor-grab active:cursor-grabbing transform -rotate-3 z-0"
-          >
-            <div className="bg-black text-white px-2 sm:px-3 py-1 sm:py-1.5 flex items-center justify-between border-b-4 border-black">
-              <span className="font-black text-[8px] sm:text-[10px] tracking-widest truncate">root@cluster:~</span>
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#FFC900] border-2 border-black rounded-full animate-pulse shrink-0" />
-            </div>
-            <div className="p-2 sm:p-4 font-mono text-[10px] sm:text-sm font-bold text-black flex flex-col gap-1 sm:gap-2">
-              <p className="text-gray-500">❯ starting deployment</p>
-              <p className="truncate">❯ loading k8s config</p>
-              <p className="text-green-600 bg-green-100 px-1 inline-block border-2 border-black [box-shadow:2px_2px_0px_0px_rgba(0,0,0,1)] self-start my-1">✓ nodes ready</p>
-              <p className="text-gray-500">❯ awaiting traffic...</p>
-            </div>
-          </motion.div>
+          <LiveTerminal
+            ref={terminalRef}
+            constraintsRef={heroRef}
+            shadow={shadow}
+            reduceMotion={reduceMotion}
+            onDeployCommand={deploy}
+          />
+
+          <AnimatePresence>
+            {messy && (
+              <motion.button
+                type="button"
+                onClick={tidyUp}
+                initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.8 }}
+                className="absolute top-3 left-3 z-20 inline-flex items-center gap-1.5 bg-white border-2 border-black px-2.5 py-1 font-black uppercase tracking-widest text-[10px] sm:text-xs shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFC900] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Tidy up<span className="sm:hidden normal-case font-bold tracking-normal">(or shake)</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           {/* Hero Content */}
-          <div className="max-w-4xl relative z-10 mx-auto text-center w-full flex flex-col items-center justify-center">
+          <motion.div animate={heroShake} className="max-w-4xl relative z-10 mx-auto text-center w-full flex flex-col items-center justify-center pointer-events-none">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -240,9 +521,31 @@ export function Home() {
             >
               {showAll ? (
                 <>
-                  <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="block hover:text-[#38BDF8] active:text-[#38BDF8] focus:text-[#38BDF8] transition-colors cursor-pointer focus:outline-none w-full text-center">Backend</motion.span>
-                  <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="inline-block bg-[#FFC900] px-2 sm:px-4 py-2 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-2 sm:mt-4 rotate-1 text-[8.5vw] sm:text-7xl lg:text-8xl text-center self-center z-10 relative">Infrastructure</motion.span>
-                  <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="block mt-4 sm:mt-5 hover:text-[#FF90E8] active:text-[#FF90E8] focus:text-[#FF90E8] transition-colors cursor-pointer focus:outline-none w-full text-center">Glue Work</motion.span>
+                  <motion.span
+                    initial={reduceMotion ? false : { opacity: 0, y: -140, rotate: -8 }}
+                    animate={{ opacity: 1, y: 0, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 18 }}
+                    className="block w-full text-center"
+                  >
+                    <WiggleWord text="Backend" reduceMotion={reduceMotion} className="pointer-events-auto hover:text-[#38BDF8] focus:text-[#38BDF8] transition-colors" />
+                  </motion.span>
+                  <motion.span
+                    initial={reduceMotion ? false : { opacity: 0, y: -160 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 18, delay: 0.14 }}
+                    style={{ rotate: infraSway }}
+                    className="inline-block bg-[#FFC900] px-2 sm:px-4 py-2 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-2 sm:mt-4 text-[8.5vw] sm:text-7xl lg:text-8xl text-center self-center z-10 relative"
+                  >
+                    Infrastructure
+                  </motion.span>
+                  <motion.span
+                    initial={reduceMotion ? false : { opacity: 0, y: -140, rotate: 8 }}
+                    animate={{ opacity: 1, y: 0, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 18, delay: 0.28 }}
+                    className="block mt-4 sm:mt-5 w-full text-center"
+                  >
+                    <WiggleWord text="Glue Work" reduceMotion={reduceMotion} className="pointer-events-auto hover:text-[#FF90E8] focus:text-[#FF90E8] transition-colors" />
+                  </motion.span>
                 </>
               ) : (
                 <span className="text-5xl sm:text-7xl lg:text-8xl">
@@ -256,20 +559,22 @@ export function Home() {
               )}
             </motion.h1>
 
-          </div>
+          </motion.div>
 
-          {/* Scroll Indicator (Moved down and enlarged) */}
-          <motion.div
-            animate={{ y: [0, 15, 0] }}
+          {/* Scroll Indicator */}
+          <motion.button
+            type="button"
+            aria-label="Scroll to the next section"
+            animate={reduceMotion ? undefined : { y: [0, 15, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
             className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 cursor-pointer group z-50"
-            onClick={() => credibilityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onClick={() => credibilityRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })}
           >
             <span className="font-black uppercase tracking-widest text-xs sm:text-sm bg-white px-4 py-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:bg-[#FFC900] transition-colors">Keep Scrolling</span>
             <div className="bg-[#FF90E8] p-2 sm:p-3 border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-full group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group-hover:translate-y-[4px] transition-all">
               <ArrowDown className="w-6 h-6 sm:w-8 sm:h-8 text-black" />
             </div>
-          </motion.div>
+          </motion.button>
         </section>
 
 
@@ -284,7 +589,7 @@ export function Home() {
             >
               <div className="absolute -top-4 -left-4 w-8 h-8 bg-[#38BDF8] border-4 border-black rounded-full" />
               <div className="absolute -bottom-4 -right-4 w-8 h-8 bg-[#FF90E8] border-4 border-black" />
-              
+
               <p className="text-xl text-black font-bold leading-relaxed text-left">
                 I have strong exposure to DevOps practices, backend development, and production support for enterprise systems. I am a continuous learner, passionate about designing scalable systems, writing robust backend code, and exploring new technologies. Choose how you want to explore my experience below.
               </p>
@@ -292,65 +597,46 @@ export function Home() {
 
             {/* Path Selection Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <Link to="/chat" onClick={() => trackEvent('path_choice', { choice: 'chat' })} className="block bg-[#FF90E8] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all group text-left h-full flex flex-col justify-between">
-                  <div>
-                    <div className="bg-black text-white w-16 h-16 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mb-6 group-hover:rotate-12 transition-transform">
-                      <Terminal className="w-8 h-8" />
-                    </div>
-                    <h2 className="text-3xl font-black uppercase mb-4">Interactive<br/>Terminal</h2>
-                    <p className="text-lg font-bold mb-8">Chat with an AI assistant trained on my experience, projects, and technical skills.(YES ITS DESIGNED TO BRAG ABOUT ME A LOT)</p>
-                  </div>
-                  <div className="flex items-center gap-2 font-black uppercase tracking-widest text-black border-2 border-black bg-white px-4 py-2 self-start shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:bg-black group-hover:text-white transition-colors">
-                    Start Chat <ArrowUpRight className="w-5 h-5" />
-                  </div>
-                </Link>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Link to="/normal" onClick={() => trackEvent('path_choice', { choice: 'manual' })} className="block bg-[#38BDF8] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all group text-left h-full flex flex-col justify-between">
-                  <div>
-                    <div className="bg-white text-black w-16 h-16 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-6 group-hover:-rotate-12 transition-transform">
-                      <LayoutDashboard className="w-8 h-8" />
-                    </div>
-                    <h2 className="text-3xl font-black uppercase mb-4">Manual<br/>Mode</h2>
-                    <p className="text-lg font-bold mb-8">Browse my complete professional history, skill sets, and achievements in a standard layout.</p>
-                  </div>
-                  <div className="flex items-center gap-2 font-black uppercase tracking-widest text-black border-2 border-black bg-[#FFC900] px-4 py-2 self-start shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:bg-black group-hover:text-[#FFC900] transition-colors">
-                    View Resume <ArrowUpRight className="w-5 h-5" />
-                  </div>
-                </Link>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <Link to="/terminal" onClick={() => trackEvent('path_choice', { choice: 'terminal_resume' })} className="block bg-[#FFC900] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all group text-left h-full flex flex-col justify-between">
-                  <div>
-                    <div className="bg-black text-[#7CFF6B] w-16 h-16 flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] mb-6 group-hover:rotate-12 transition-transform">
-                      <Terminal className="w-8 h-8" />
-                    </div>
-                    <h2 className="text-3xl font-black uppercase mb-4">CLI<br/>Resume</h2>
-                    <p className="text-lg font-bold mb-8">Type commands, inspect portfolio services, download the resume, and explore experience like a shell.</p>
-                  </div>
-                  <div className="flex items-center gap-2 font-black uppercase tracking-widest text-black border-2 border-black bg-white px-4 py-2 self-start shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:bg-black group-hover:text-[#FFC900] transition-colors">
-                    Run Commands <ArrowUpRight className="w-5 h-5" />
-                  </div>
-                </Link>
-              </motion.div>
+              {[
+                {
+                  kind: "chat" as const,
+                  ...NAV.chat,
+                  title: <>Interactive<br />Terminal</>,
+                  description: "Chat with an AI assistant trained on my experience, projects, and technical skills.(YES ITS DESIGNED TO BRAG ABOUT ME A LOT)",
+                  cta: "Start Chat",
+                  ctaClassName: "bg-white group-hover:bg-black group-hover:text-white",
+                  iconBoxClassName: "bg-black text-white shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]",
+                },
+                {
+                  kind: "manual" as const,
+                  ...NAV.normal,
+                  title: <>Manual<br />Mode</>,
+                  description: "Browse my complete professional history, skill sets, and achievements in a standard layout.",
+                  cta: "View Resume",
+                  ctaClassName: "bg-[#FFC900] group-hover:bg-black group-hover:text-[#FFC900]",
+                  iconBoxClassName: "bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
+                },
+                {
+                  kind: "cli" as const,
+                  ...NAV.terminal,
+                  title: <>CLI<br />Resume</>,
+                  description: "Type commands, inspect portfolio services, download the resume, and explore experience like a shell.",
+                  cta: "Run Commands",
+                  ctaClassName: "bg-white group-hover:bg-black group-hover:text-[#FFC900]",
+                  iconBoxClassName: "bg-black text-[#7CFF6B] shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]",
+                },
+              ].map((card, i) => (
+                <motion.div
+                  key={card.kind}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.5, delay: 0.1 * (i + 1) }}
+                  style={{ perspective: 900 }}
+                >
+                  <PathCard {...card} tilt={finePointer} reduceMotion={reduceMotion} />
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
@@ -369,13 +655,28 @@ export function Home() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <p className="font-black border-4 border-black px-4 py-2 bg-black text-white shadow-[6px_6px_0px_0px_rgba(255,201,0,1)] uppercase">
-                READY TO DEPLOY.
-              </p>
+              <DeployButton />
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.id}
+            role="status"
+            initial={{ opacity: 0, y: 40, rotate: -4, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, rotate: -1, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+            className="fixed top-[156px] left-1/2 -translate-x-1/2 z-[90] bg-black text-white font-black uppercase tracking-wider text-sm px-4 py-3 border-4 border-black shadow-[6px_6px_0px_0px_rgba(255,201,0,1)] whitespace-nowrap"
+          >
+            {toast.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
     </>
   );

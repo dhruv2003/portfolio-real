@@ -10,13 +10,20 @@ const MENU_ITEMS = [
   { label: 'Send Email', icon: Mail, action: () => window.location.href = 'mailto:bhagatkardhruv2003@gmail.com' },
 ];
 
+const MENU_WIDTH = 280;
+const MENU_HEIGHT = 200;
+
 export function ContextMenu() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [show, setShow] = useState(false);
 
   const handleContextMenu = useCallback((e: MouseEvent) => {
     e.preventDefault();
-    setPos({ x: e.clientX, y: e.clientY });
+    // Keep the menu on screen near the right/bottom edges
+    setPos({
+      x: Math.min(e.clientX, window.innerWidth - MENU_WIDTH - 8),
+      y: Math.min(e.clientY, window.innerHeight - MENU_HEIGHT - 8),
+    });
     setShow(true);
     trackEvent('context_menu_open');
   }, []);
@@ -24,12 +31,16 @@ export function ContextMenu() {
   const close = useCallback(() => setShow(false), []);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('click', close);
-    document.addEventListener('keydown', (e) => e.key === 'Escape' && close());
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('click', close);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleContextMenu, close]);
 
@@ -41,7 +52,7 @@ export function ContextMenu() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.1 }}
-          className="fixed z-[200] bg-black border-4 border-black shadow-[6px_6px_0px_0px_rgba(255,201,0,1)] min-w-[240px]"
+          className="fixed z-[200] bg-black border-4 border-black shadow-[6px_6px_0px_0px_rgba(255,201,0,1)] min-w-[240px] max-w-[280px]"
           style={{ left: pos.x, top: pos.y }}
           onClick={(e) => e.stopPropagation()}
         >

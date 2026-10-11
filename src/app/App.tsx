@@ -1,16 +1,41 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
 import { initGA, trackPageView, trackEvent } from '../utils/analytics';
 import { useKonamiCode } from '../hooks/useKonamiCode';
+import { CustomCursor } from './components/CustomCursor';
+import { RouteTransition } from './components/RouteTransition';
+
+const GLITCH_MS = 450;
+const HACKER_MODE_MS = 10000;
+
+const navigateTo = (to: string) => {
+  router.navigate(to);
+};
+
+// Scanline sweep + jitter; `swap` runs mid-glitch so the theme change hides inside it
+function glitch(swap: () => void) {
+  const root = document.documentElement;
+  root.classList.remove('hacker-glitch');
+  void root.offsetWidth; // restart the CSS animation
+  root.classList.add('hacker-glitch');
+  window.setTimeout(swap, GLITCH_MS / 3);
+  window.setTimeout(() => root.classList.remove('hacker-glitch'), GLITCH_MS);
+}
 
 export default function App() {
   useKonamiCode();
 
+  const hackerTimer = useRef<number | undefined>(undefined);
   const activateHackerMode = useCallback(() => {
-    document.documentElement.classList.add('hacker-mode');
+    const root = document.documentElement;
     trackEvent('easter_egg', { egg: 'hacker_mode' });
-    setTimeout(() => document.documentElement.classList.remove('hacker-mode'), 10000);
+    if (!root.classList.contains('hacker-mode')) glitch(() => root.classList.add('hacker-mode'));
+    window.clearTimeout(hackerTimer.current);
+    hackerTimer.current = window.setTimeout(
+      () => glitch(() => root.classList.remove('hacker-mode')),
+      HACKER_MODE_MS
+    );
   }, []);
 
   // Desktop: ~ key
@@ -128,5 +153,11 @@ export default function App() {
     };
   }, []);
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <RouteTransition navigate={navigateTo} />
+      <CustomCursor />
+    </>
+  );
 }
