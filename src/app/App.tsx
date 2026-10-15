@@ -112,10 +112,11 @@ export default function App() {
       trackPageView(state.location.pathname + state.location.search);
     });
 
-    const originalTitle = "Dhruv | Backend + Infrastructure";
+    let originalTitle = document.title;
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        originalTitle = document.title;
         document.title = "Production is down! 🔥";
       } else {
         document.title = originalTitle;

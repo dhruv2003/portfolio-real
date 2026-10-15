@@ -14,6 +14,7 @@ import { Link } from 'react-router';
 import { trackEvent } from "../../utils/analytics";
 import { fireConfetti } from "../../utils/confetti";
 import { transitionClick } from "../../utils/routeTransition";
+import { usePageMeta } from "../../hooks/usePageMeta";
 import { FINE_POINTER, useMediaQuery } from "../../hooks/useMediaQuery";
 import { useShake } from "../../hooks/useShake";
 import { BootSequence } from "../components/BootSequence";
@@ -69,6 +70,12 @@ const contains = (el: Element, p: { x: number; y: number }) => {
 };
 
 export function Home() {
+  usePageMeta({
+    title: "Dhruv Bhagatkar | Backend + Infrastructure Engineer",
+    description:
+      "Portfolio of Dhruv Bhagatkar, a backend and DevOps engineer at Oracle Financial Services Software. Systems, observability, authentication, and production glue.",
+    path: "/",
+  });
   const reduceMotion = useReducedMotion();
   const finePointer = useMediaQuery(FINE_POINTER);
   const isMobile = useMediaQuery('(max-width: 639px)');

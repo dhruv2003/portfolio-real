@@ -1,0 +1,9 @@
+{
+  "name": "Dhruv Bhagatkar — Backend + Infrastructure",
+  "short_name": "Dhruv",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#ffffff",
+  "theme_color": "#FFC900",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

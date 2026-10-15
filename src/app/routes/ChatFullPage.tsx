@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
+import { usePageMeta } from '../../hooks/usePageMeta';
 import { trackEvent } from '../../utils/analytics';
 import { transitionClick } from "../../utils/routeTransition";
 import { SafeMarkdown } from '../../components/SafeMarkdown';
@@ -31,6 +32,7 @@ function makeMessage(text: string, sender: 'user' | 'ai'): Message {
 }
 
 export function ChatFullPage() {
+  usePageMeta({ title: "Chat | Dhruv Bhagatkar", path: "/chat", noindex: true });
   const [messages, setMessages] = useState<Message[]>([
     makeMessage(
       'Hi! Ask me anything about my work, experience, or approach to building software.',

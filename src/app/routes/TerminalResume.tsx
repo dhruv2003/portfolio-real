@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Download, Send, Terminal } from "lucide-react";
 import { Link } from "react-router";
+import { usePageMeta } from "../../hooks/usePageMeta";
 import { trackEvent } from "../../utils/analytics";
 import { transitionClick } from "../../utils/routeTransition";
 import { fireConfetti } from "../../utils/confetti";
@@ -70,6 +71,7 @@ const commands: Record<string, string[]> = {
 };
 
 export function TerminalResume() {
+  usePageMeta({ title: "Terminal | Dhruv Bhagatkar", path: "/terminal", noindex: true });
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<TerminalLine[]>([
     {
