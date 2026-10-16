@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { animate, motion, useMotionValue, useReducedMotion, type PanInfo } from "motion/react";
 import { Link } from "react-router";
+import { usePageMeta } from "../../hooks/usePageMeta";
 import { Terminal } from "lucide-react";
 import { trackEvent } from "../../utils/analytics";
 import { transitionClick } from "../../utils/routeTransition";
@@ -8,6 +9,7 @@ import { transitionClick } from "../../utils/routeTransition";
 const EVICT_SPEED = 1200;
 
 export function NotFound() {
+  usePageMeta({ title: "404 — Page not found | Dhruv Bhagatkar", path: "/404", noindex: true });
   const reduceMotion = useReducedMotion();
   const blockRef = useRef<HTMLSpanElement>(null);
   const x = useMotionValue(0);

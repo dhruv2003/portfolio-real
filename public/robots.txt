@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /chat
+Disallow: /terminal
+
+Sitemap: https://thisisdhruv.in/sitemap.xml

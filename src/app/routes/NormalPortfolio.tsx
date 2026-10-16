@@ -18,6 +18,7 @@ import { Link } from "react-router";
 import { ImageWithFallback } from "../components/media/ImageWithFallback";
 import { trackEvent } from "../../utils/analytics";
 import { transitionClick } from "../../utils/routeTransition";
+import { usePageMeta } from "../../hooks/usePageMeta";
 
 const rotatingRoles = [
   "Associate Consultant",
@@ -32,6 +33,12 @@ const rotatingRoles = [
 ];
 
 export function NormalPortfolio() {
+  usePageMeta({
+    title: "Dhruv Bhagatkar | Backend & DevOps Engineer — Resume",
+    description:
+      "Resume of Dhruv Bhagatkar, Associate Consultant at Oracle Financial Services Software. Backend and DevOps engineer: SSO/SAML authentication, Kubernetes, Jenkins, WebLogic, FCUBS.",
+    path: "/normal",
+  });
   const [activeRoleIndex, setActiveRoleIndex] = useState(0);
   const [displayedRole, setDisplayedRole] = useState("");
   const [isDeletingRole, setIsDeletingRole] = useState(false);
