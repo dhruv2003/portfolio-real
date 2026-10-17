@@ -9,7 +9,7 @@ import { routes } from "./app/routeConfig";
 
 export async function render(url: string) {
   const handler = createStaticHandler(routes);
-  const context = await handler.query(new Request(`https://thisisdhruv.in${url}`));
+  const context = await handler.query(new Request(`https://www.thisisdhruv.in${url}`));
   if (context instanceof Response) throw new Error(`Unexpected response for ${url}`);
   const router = createStaticRouter(handler.dataRoutes, context);
   return renderToString(

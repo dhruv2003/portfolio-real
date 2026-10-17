@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const ssrDir = path.join(root, "dist-ssr");
-const SITE = "https://thisisdhruv.in";
+const SITE = "https://www.thisisdhruv.in";
 
 const pages = [
   {
@@ -47,7 +47,7 @@ fs.writeFileSync(path.join(dist, "spa.html"), shell);
 
 for (const page of pages) {
   const appHtml = await render(page.url);
-  const canonical = `${SITE}${page.url === "/" ? "" : page.url}`;
+  const canonical = `${SITE}${page.url}`;
   let html = shell;
   html = replaceOnce(html, /<title>[^<]*<\/title>/, `<title>${escapeAttr(page.title)}</title>`, "<title>");
   html = replaceOnce(html, /<meta name="description" content="[^"]*" \/>/, `<meta name="description" content="${escapeAttr(page.description)}" />`, "meta description");
