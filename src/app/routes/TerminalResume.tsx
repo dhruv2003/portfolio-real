@@ -1,146 +1,290 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, Download, Send, Terminal } from "lucide-react";
 import { Link } from "react-router";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { trackEvent } from "../../utils/analytics";
-import { transitionClick } from "../../utils/routeTransition";
-import { fireConfetti } from "../../utils/confetti";
+import { startRouteTransition, transitionClick } from "../../utils/routeTransition";
+import { commands } from "../terminal/commands";
+import {
+  complete,
+  err,
+  isThemeName,
+  muted,
+  resolve,
+  suggest,
+  THEMES,
+  toLine,
+  type Ctx,
+  type Line,
+  type LineInput,
+  type Live,
+  type LiveOptions,
+  type Mode,
+  type ThemeName,
+} from "../terminal/engine";
 
-type TerminalLine = {
-  prompt?: string;
-  output: string[];
-};
+type Entry = { id: number; prompt?: string; lines: Line[] };
+
+type LiveState = { lines: Line[]; opts: LiveOptions; timers: number[]; ended: boolean; api: Live };
 
 const TERMINAL_PROMPT = "visitor@portfolio:~$";
+const THEME_KEY = "terminal_theme";
+const MODIFIER_KEYS = ["Shift", "Control", "Alt", "Meta", "CapsLock"];
 
-const commands: Record<string, string[]> = {
-  help: [
-    "Available commands:",
-    "whoami        - short intro",
-    "skills        - core technical toolkit",
-    "projects      - highlighted builds",
-    "experience    - professional focus",
-    "contact       - ways to reach me",
-    "download      - download resume PDF",
-    "kubectl pods  - inspect portfolio services",
-    "docker ps     - inspect portfolio containers",
-    "clear         - clear terminal",
-  ],
-  whoami: [
-    "Dhruv Bhagatkar",
-    "Backend + infrastructure focused engineer who likes production debugging, automation, observability, and shipping reliable systems.",
-  ],
-  skills: [
-    "Backend: Java, Python, TypeScript, APIs, integrations",
-    "Infra: Kubernetes, Docker, Linux, CI/CD, Bash automation",
-    "Systems: Oracle/WebLogic, JNDI, multi-data-source setups, production support",
-    "Exploring: AI tooling, Web3, system design, developer productivity",
-  ],
-  projects: [
-    "SSO/SAML authentication app - enterprise auth flows and validation behavior",
-    "WebLogic monitoring tooling - operational visibility for server environments",
-    "Log pruning + structured logging - reliability and disk/CPU improvements",
-    "Data scraper - distributed scraping and backend APIs",
-    "FitterCoin - Web3 fitness rewards concept",
-  ],
-  experience: [
-    "Associate Consultant / DevOps Engineer focus:",
-    "- Backend and platform integrations",
-    "- Production issue debugging",
-    "- Deployment and release automation",
-    "- Authentication architecture",
-    "- Observability and operational tooling",
-  ],
-  contact: [
-    "Email: bhagatkardhruv2003@gmail.com",
-    "GitHub: https://github.com/dhruv2003",
-    "LinkedIn: https://www.linkedin.com/in/dhruv-bhagatkar-1b267995",
-  ],
-  "kubectl pods": [
-    "NAME                         READY   STATUS      RESTARTS   AGE",
-    "portfolio-web-7d9f           1/1     Running     0          99d",
-    "resume-service-42x           1/1     Running     0          99d",
-    "chat-terminal-api            1/1     Running     1          42d",
-    "hire-dhruv-job               0/1     Pending     0          now",
-  ],
-  "docker ps": [
-    "CONTAINER ID   IMAGE                  STATUS",
-    "db2003         dhruv/portfolio:latest Up 99 days",
-    "c0ffee         dhruv/resume:stable    Up 99 days",
-  ],
+let nextId = 0;
+const entry = (prompt: string | undefined, lines: LineInput[] = []): Entry => ({ id: nextId++, prompt, lines: lines.map(toLine) });
+
+const readTheme = (): ThemeName => {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    return saved && isThemeName(saved) ? saved : "green";
+  } catch {
+    return "green";
+  }
 };
 
 export function TerminalResume() {
   usePageMeta({ title: "Terminal | Dhruv Bhagatkar", path: "/terminal", noindex: true });
+  const reduceMotion = useReducedMotion();
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState<TerminalLine[]>([
-    {
-      output: [
-        "DhruvOS terminal resume booted.",
-        "Type 'help' to explore experience, skills, projects, and contact info.",
-      ],
-    },
+  const [entries, setEntries] = useState<Entry[]>(() => [
+    entry(undefined, [
+      "DhruvOS terminal resume booted.",
+      "Type 'help' to explore experience, skills, projects, and contact info.",
+      muted("psst: there are fun commands too 👀 · ↑/↓ history · Tab completes"),
+    ]),
   ]);
+  const [liveLines, setLiveLines] = useState<Line[] | null>(null);
+  const [mode, setModeState] = useState<Mode | null>(null);
+  const [theme, setThemeState] = useState<ThemeName>(readTheme);
+  const [glitching, setGlitching] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const liveRef = useRef<LiveState | null>(null);
+  const modeRef = useRef<Mode | null>(null);
+  const themeRef = useRef(theme);
+  const historyRef = useRef<string[]>([]);
+  const historyIndex = useRef(0);
+  const glitchTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [history]);
+    bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [entries, liveLines]);
 
-  const appendHistory = (raw: string, output: string[]) => {
-    setHistory((prev) => [...prev, { prompt: `${TERMINAL_PROMPT} ${raw}`, output }]);
-    setInput("");
+  // Stop animations and timers when leaving the page
+  useEffect(
+    () => () => {
+      liveRef.current?.api.end({ keep: false });
+      window.clearTimeout(glitchTimer.current);
+    },
+    [],
+  );
+
+  const pushEntry = useCallback((prompt: string | undefined, lines: LineInput[] = []) => {
+    setEntries((prev) => [...prev, entry(prompt, lines)]);
+  }, []);
+
+  /** Output always belongs to the most recent prompt */
+  const appendLines = useCallback((lines: LineInput[]) => {
+    if (!lines.length) return;
+    setEntries((prev) => {
+      if (!prev.length) return [entry(undefined, lines)];
+      const last = prev[prev.length - 1];
+      return [...prev.slice(0, -1), { ...last, lines: [...last.lines, ...lines.map(toLine)] }];
+    });
+  }, []);
+
+  const startLive = useCallback(
+    (initial: LineInput[] = [], opts: LiveOptions = {}): Live => {
+      liveRef.current?.api.end();
+      const state = { lines: initial.map(toLine), opts, timers: [] as number[], ended: false } as LiveState;
+      const api: Live = {
+        set(lines) {
+          if (state.ended) return;
+          state.lines = lines.map(toLine);
+          setLiveLines(state.lines);
+        },
+        push(...lines) {
+          api.set([...state.lines, ...lines]);
+        },
+        every(ms, tick) {
+          if (!state.ended) state.timers.push(window.setInterval(tick, ms));
+        },
+        after(ms, fn) {
+          if (!state.ended) state.timers.push(window.setTimeout(fn, ms));
+        },
+        end({ keep = true } = {}) {
+          if (state.ended) return;
+          state.ended = true;
+          state.timers.forEach((t) => {
+            window.clearInterval(t);
+            window.clearTimeout(t);
+          });
+          if (liveRef.current === state) {
+            liveRef.current = null;
+            setLiveLines(null);
+          }
+          if (keep) appendLines(state.lines);
+        },
+      };
+      state.api = api;
+      liveRef.current = state;
+      setLiveLines(state.lines);
+      return api;
+    },
+    [appendLines],
+  );
+
+  const interruptLive = () => {
+    const state = liveRef.current;
+    if (!state) return;
+    const extra = state.opts.onInterrupt?.() ?? ["^C"];
+    state.api.end();
+    appendLines(extra);
   };
 
+  const setMode = (next: Mode | null) => {
+    modeRef.current = next;
+    setModeState(next);
+  };
+
+  const makeCtx = (args: string): Ctx => ({
+    args,
+    print: (...lines) => appendLines(lines),
+    clear: () => setEntries([]),
+    live: startLive,
+    setMode,
+    setTheme(name) {
+      themeRef.current = name;
+      setThemeState(name);
+      try {
+        localStorage.setItem(THEME_KEY, name);
+      } catch {
+        // Private mode: the theme just won't stick
+      }
+    },
+    get theme() {
+      return themeRef.current;
+    },
+    glitch(ms) {
+      setGlitching(true);
+      window.clearTimeout(glitchTimer.current);
+      glitchTimer.current = window.setTimeout(() => setGlitching(false), ms);
+    },
+    goHome() {
+      window.setTimeout(() => startRouteTransition("/", "#FFC900", "back to base…", window.innerWidth / 2, window.innerHeight / 2), 400);
+    },
+    history: historyRef.current,
+  });
+
   const runCommand = () => {
+    if (liveRef.current) return;
     const raw = input.trim();
+    setInput("");
+    historyIndex.current = historyRef.current.length + (raw ? 1 : 0);
+
+    const activeMode = modeRef.current;
+    if (activeMode) {
+      pushEntry(`${activeMode.prompt} ${raw}`);
+      activeMode.onInput(raw, makeCtx(""));
+      return;
+    }
+
+    pushEntry(`${TERMINAL_PROMPT} ${raw}`);
     if (!raw) return;
-    const command = raw.toLowerCase();
+    historyRef.current.push(raw);
 
-    trackEvent("terminal_resume_command", { command });
-
-    if (/\b(claude|codex)\b/i.test(command)) {
-      appendHistory(raw, [
-        "ERROR 503: External AI detected.",
+    if (/\b(claude|codex)\b/i.test(raw)) {
+      trackEvent("terminal_resume_command", { command: "ai_rival" });
+      appendLines([
+        err("ERROR 503: External AI detected."),
         "This terminal runs on Dhruv-powered infrastructure.",
         "Please ask about Dhruv's work instead of summoning the competition.",
       ]);
       return;
     }
 
-    if (command === "clear") {
-      setHistory([]);
-      setInput("");
+    const match = resolve(commands, raw);
+    if (match) {
+      // Only the command name goes to analytics, never what visitors type after it
+      trackEvent("terminal_resume_command", { command: match.command.name });
+      match.command.run(makeCtx(match.args));
       return;
     }
 
-    if (command === "download") {
-      const a = document.createElement("a");
-      a.href = "/Dhruv_Bhagatkar_Resume.pdf";
-      a.download = "Dhruv_Bhagatkar_Resume.pdf";
-      a.click();
-      appendHistory(raw, ["Downloading resume PDF..."]);
-      return;
-    }
-
-    if (command === "sudo hire dhruv") {
-      fireConfetti();
-      appendHistory(raw, [
-        "Permission granted.",
-        "Recruiter pipeline initialized.",
-        "Next step: send an email or connect on LinkedIn.",
-      ]);
-      return;
-    }
-
-    const output = commands[command] || [
-      `Command not found: ${raw}`,
-      "Try 'help', 'whoami', 'skills', 'projects', 'kubectl pods', 'docker ps', or 'download'.",
-    ];
-
-    appendHistory(raw, output);
+    trackEvent("terminal_resume_command", { command: "unknown" });
+    const guess = suggest(commands, raw);
+    appendLines([err(`command not found: ${raw.split(" ")[0]}`), muted(guess ? `did you mean '${guess}'?` : "type 'help' to see what I can do")]);
   };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const key = e.key.toLowerCase();
+    const ctrlC = e.ctrlKey && key === "c";
+
+    if (liveRef.current) {
+      if (ctrlC || (liveRef.current.opts.stopOnKey && !MODIFIER_KEYS.includes(e.key))) {
+        e.preventDefault();
+        interruptLive();
+      }
+      return;
+    }
+
+    if (e.key === "Enter") {
+      runCommand();
+      return;
+    }
+
+    if (e.ctrlKey && key === "l") {
+      e.preventDefault();
+      setEntries([]);
+      return;
+    }
+
+    // Ctrl+C with text selected still copies
+    const el = e.currentTarget;
+    if (ctrlC && el.selectionStart === el.selectionEnd) {
+      e.preventDefault();
+      const activeMode = modeRef.current;
+      pushEntry(`${activeMode?.prompt ?? TERMINAL_PROMPT} ${input}^C`);
+      setInput("");
+      if (activeMode?.onInterrupt) activeMode.onInterrupt(makeCtx(""));
+      else if (!activeMode) appendLines([muted("nice try. prod is still up.")]);
+      return;
+    }
+
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      const history = historyRef.current;
+      if (!history.length) return;
+      e.preventDefault();
+      const next = Math.min(Math.max(historyIndex.current + (e.key === "ArrowUp" ? -1 : 1), 0), history.length);
+      historyIndex.current = next;
+      setInput(history[next] ?? "");
+      return;
+    }
+
+    // Empty input: let Tab move focus as usual so keyboard users aren't trapped
+    if (e.key === "Tab" && input.trim() && !modeRef.current) {
+      e.preventDefault();
+      const matches = complete(commands, input.trimStart());
+      if (matches.length === 1) setInput(matches[0] + " ");
+      else if (matches.length > 1) pushEntry(`${TERMINAL_PROMPT} ${input}`, [matches.join("    ")]);
+    }
+  };
+
+  const palette = THEMES[theme];
+  const prompt = mode?.prompt ?? TERMINAL_PROMPT;
+
+  const renderLine = (line: Line, key: number) => (
+    <p
+      key={key}
+      style={{ color: palette[line.tone ?? "out"] }}
+      className={line.pre ? "leading-snug whitespace-pre overflow-x-auto" : "leading-relaxed whitespace-pre-wrap break-words"}
+    >
+      {line.text || " "}
+    </p>
+  );
 
   return (
     <div className="h-screen max-h-screen overflow-hidden bg-[#FFFDF9] text-black font-sans selection:bg-[#FFC900] selection:text-black flex flex-col">
@@ -162,53 +306,69 @@ export function TerminalResume() {
       </header>
 
       <main className="flex-1 min-h-0 w-full px-2 sm:px-4 lg:px-6 py-2 sm:py-3 flex flex-col">
-        <section className="flex-1 min-h-0 h-full bg-black text-[#7CFF6B] border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,201,0,1)] overflow-hidden flex flex-col">
+        <motion.section
+          animate={glitching && !reduceMotion ? { x: [0, -8, 7, -5, 4, 0] } : { x: 0 }}
+          transition={glitching ? { duration: 0.25, repeat: Infinity } : { duration: 0 }}
+          style={{
+            backgroundColor: palette.bg,
+            color: palette.fg,
+            filter: glitching ? "hue-rotate(140deg) saturate(2) contrast(1.4)" : undefined,
+          }}
+          className="relative flex-1 min-h-0 h-full border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,201,0,1)] overflow-hidden flex flex-col"
+        >
           <div className="shrink-0 bg-[#FFC900] text-black border-b-4 border-black px-3 sm:px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <span className="font-black uppercase tracking-widest">dhruv-os</span>
               <span className="hidden sm:inline font-mono text-xs font-bold truncate">
-                type help · whoami · skills · projects · download
+                type help · neofetch · git log · incident · tail -f
               </span>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div aria-hidden="true" className="flex gap-2 shrink-0">
               <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#FF90E8] border-2 border-black" />
               <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#38BDF8] border-2 border-black" />
               <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white border-2 border-black" />
             </div>
           </div>
-          <div
-            className="flex-1 min-h-0 p-3 sm:p-5 lg:p-6 font-mono text-sm sm:text-base overflow-y-auto"
-            onClick={() => inputRef.current?.focus()}
-          >
+          <div className="flex-1 min-h-0 p-3 sm:p-5 lg:p-6 font-mono text-sm sm:text-base overflow-y-auto" onClick={() => inputRef.current?.focus()}>
             <div role="log" aria-live="polite" aria-relevant="additions text">
-              {history.map((entry, idx) => (
-                <div key={idx} className="mb-4">
-                  {entry.prompt && (
-                    <p className="text-white">
-                      <span className="text-[#38BDF8]">{entry.prompt}</span>
+              {entries.map((item) => (
+                <div key={item.id} className="mb-4">
+                  {item.prompt !== undefined && (
+                    <p className="break-words" style={{ color: palette.prompt }}>
+                      {item.prompt}
                     </p>
                   )}
-                  {entry.output.map((line, lineIdx) => (
-                    <p key={lineIdx} className="leading-relaxed whitespace-pre-wrap">
-                      {line}
-                    </p>
-                  ))}
+                  {item.lines.map(renderLine)}
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-2 text-white">
-              <span className="text-[#38BDF8] shrink-0">{TERMINAL_PROMPT}</span>
+            {/* Animations repaint many times a second; screen readers get the final result once it lands in the log */}
+            {liveLines && (
+              <div aria-hidden="true" className="mb-4 overflow-hidden">
+                {liveLines.map(renderLine)}
+              </div>
+            )}
+            <div className="flex items-center gap-2" style={{ opacity: liveLines ? 0.4 : 1 }}>
+              <span className="shrink-0" style={{ color: palette.prompt }}>
+                {prompt}
+              </span>
               <input
                 ref={inputRef}
                 value={input}
+                readOnly={!!liveLines}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && runCommand()}
+                onKeyDown={onKeyDown}
                 autoFocus
-                className="bg-transparent outline-none flex-1 text-[#7CFF6B] min-w-0"
+                autoCapitalize="off"
+                autoCorrect="off"
+                autoComplete="off"
+                spellCheck={false}
+                className="bg-transparent outline-none flex-1 min-w-0"
+                style={{ color: palette.fg, caretColor: palette.fg }}
                 aria-label="Terminal command"
               />
               <button
-                onClick={runCommand}
+                onClick={() => (liveRef.current ? interruptLive() : runCommand())}
                 aria-label="Run terminal command"
                 className="sm:hidden bg-[#FFC900] text-black border-2 border-black p-1"
               >
@@ -217,7 +377,7 @@ export function TerminalResume() {
             </div>
             <div ref={bottomRef} />
           </div>
-        </section>
+        </motion.section>
       </main>
     </div>
   );
