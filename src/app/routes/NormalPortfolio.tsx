@@ -382,14 +382,6 @@ export function NormalPortfolio() {
                 >
                   <Globe className="w-4 h-4" /> Website
                 </a>
-                <a
-                  href="/Dhruv_Bhagatkar_Resume.pdf"
-                  download
-                  onClick={() => trackEvent("download_resume")}
-                  className="flex items-center gap-2 font-bold border-2 border-black px-3 py-1.5 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-sm group text-black"
-                >
-                  <Download className="w-4 h-4 group-hover:block transition-all" /> Download Resume
-                </a>
               </div>
               <p className="mt-5 text-xs font-bold uppercase tracking-widest text-black/60">
                 Last updated {__LAST_UPDATED__}
