@@ -40,13 +40,6 @@ const SECTIONS = [
   { id: "education", label: "Education" },
 ];
 
-const HIGHLIGHTS = [
-  { value: "6×", label: "smaller production logs", color: "bg-[#FFC900]" },
-  { value: "20%+", label: "lower CPU usage", color: "bg-[#38BDF8]" },
-  { value: "SSO/SAML", label: "auth app built from scratch", color: "bg-[#FF90E8]" },
-  { value: "$3.5K", label: "ETH Global hackathon win", color: "bg-white" },
-];
-
 export function NormalPortfolio() {
   usePageMeta({
     title: "Dhruv Bhagatkar | Backend & DevOps Engineer — Resume",
@@ -353,24 +346,6 @@ export function NormalPortfolio() {
                   {data.summary}
                 </p>
               </motion.div>
-
-              <motion.ul
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                aria-label="Highlights"
-                className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 max-w-2xl"
-              >
-                {HIGHLIGHTS.map((item) => (
-                  <li
-                    key={item.label}
-                    className={`${item.color} border-2 border-black px-3 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}
-                  >
-                    <span className="block font-black text-xl sm:text-2xl leading-none">{item.value}</span>
-                    <span className="block font-bold text-xs uppercase tracking-wide mt-1 leading-tight">{item.label}</span>
-                  </li>
-                ))}
-              </motion.ul>
 
               <div className="flex flex-wrap gap-3 mt-6">
                 <a
