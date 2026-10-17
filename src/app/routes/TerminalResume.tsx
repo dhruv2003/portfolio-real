@@ -149,9 +149,9 @@ export function TerminalResume() {
           <Link to="/" aria-label="Back to home" onClick={(e) => transitionClick(e, "/", "#FFC900", "back to base…")} className="shrink-0 bg-white border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div className="font-black text-xs sm:text-lg uppercase tracking-widest bg-[#FFC900] px-2.5 sm:px-3 py-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] truncate">
+          <h1 className="font-black text-xs sm:text-lg uppercase tracking-widest bg-[#FFC900] px-2.5 sm:px-3 py-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] truncate">
             Terminal Resume //
-          </div>
+          </h1>
           <div className="hidden md:inline-flex items-center gap-2 bg-black text-white border-2 border-black px-3 py-1 font-black uppercase tracking-widest text-xs">
             <Terminal className="w-3.5 h-3.5" /> Theatre mode
           </div>

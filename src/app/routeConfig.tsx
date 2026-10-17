@@ -1,10 +1,10 @@
 import type { RouteObject } from "react-router";
 import { Home } from "./routes/Home";
-import { ChatFullPage } from "./routes/ChatFullPage";
 import { NormalPortfolio } from "./routes/NormalPortfolio";
 import { NotFound } from "./routes/NotFound";
-import { TerminalResume } from "./routes/TerminalResume";
 
+// "/" and "/normal" stay in the main bundle: they are pre-rendered and must paint
+// immediately. Chat and the CLI resume are split out and fetched on demand.
 export const routes: RouteObject[] = [
   {
     path: "/",
@@ -12,7 +12,7 @@ export const routes: RouteObject[] = [
   },
   {
     path: "/chat",
-    Component: ChatFullPage,
+    lazy: () => import("./routes/ChatFullPage").then((m) => ({ Component: m.ChatFullPage })),
   },
   {
     path: "/normal",
@@ -20,7 +20,7 @@ export const routes: RouteObject[] = [
   },
   {
     path: "/terminal",
-    Component: TerminalResume,
+    lazy: () => import("./routes/TerminalResume").then((m) => ({ Component: m.TerminalResume })),
   },
   {
     path: "*",

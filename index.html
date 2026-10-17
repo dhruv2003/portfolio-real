@@ -28,18 +28,95 @@
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Dhruv Bhagatkar",
-        "url": "https://www.thisisdhruv.in/",
-        "image": "https://www.thisisdhruv.in/profile.jpeg",
-        "jobTitle": "Associate Consultant",
-        "description": "Backend and DevOps engineer working on enterprise banking systems, authentication (SSO/SAML), Kubernetes and production tooling.",
-        "worksFor": { "@type": "Organization", "name": "Oracle Financial Services Software" },
-        "alumniOf": { "@type": "CollegeOrUniversity", "name": "K. J. Somaiya College of Engineering" },
-        "knowsAbout": ["Backend Development", "DevOps", "Kubernetes", "Jenkins", "Oracle WebLogic", "SSO/SAML", "Observability", "Linux", "Bash", "Java", "Python"],
-        "sameAs": [
-          "https://www.linkedin.com/in/dhruv-bhagatkar-1b267995",
-          "https://github.com/dhruv2003"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://www.thisisdhruv.in/#website",
+            "url": "https://www.thisisdhruv.in/",
+            "name": "Dhruv Bhagatkar",
+            "publisher": {
+              "@id": "https://www.thisisdhruv.in/#person"
+            }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://www.thisisdhruv.in/#person",
+            "name": "Dhruv Bhagatkar",
+            "url": "https://www.thisisdhruv.in/",
+            "image": "https://www.thisisdhruv.in/profile.jpeg",
+            "jobTitle": "Associate Consultant",
+            "description": "Backend and DevOps engineer working on enterprise banking systems, authentication (SSO/SAML), Kubernetes and production tooling.",
+            "worksFor": {
+              "@type": "Organization",
+              "name": "Oracle Financial Services Software"
+            },
+            "alumniOf": {
+              "@type": "CollegeOrUniversity",
+              "name": "K. J. Somaiya College of Engineering"
+            },
+            "hasCredential": {
+              "@type": "EducationalOccupationalCredential",
+              "credentialCategory": "degree",
+              "name": "B.Tech in Electronics & Telecommunication Engineering",
+              "recognizedBy": {
+                "@type": "CollegeOrUniversity",
+                "name": "K. J. Somaiya College of Engineering"
+              }
+            },
+            "award": "Winner, ETH Global New Delhi hackathon (2025)",
+            "knowsAbout": [
+              "Backend Development",
+              "DevOps",
+              "Kubernetes",
+              "Docker",
+              "Jenkins",
+              "CI/CD",
+              "Oracle FCUBS",
+              "Oracle WebLogic",
+              "SSO/SAML",
+              "Authentication",
+              "Observability",
+              "Structured Logging",
+              "Redis",
+              "Linux",
+              "Bash",
+              "Java",
+              "Python",
+              "TypeScript",
+              "Solidity"
+            ],
+            "sameAs": [
+              "https://www.linkedin.com/in/dhruv-bhagatkar-1b267995",
+              "https://github.com/dhruv2003"
+            ]
+          },
+          {
+            "@type": "CreativeWork",
+            "name": "FitterCoin",
+            "dateCreated": "2025-09",
+            "description": "Blockchain-driven fitness app that converts user activity into crypto rewards. Built at ETH Global New Delhi.",
+            "creator": {
+              "@id": "https://www.thisisdhruv.in/#person"
+            }
+          },
+          {
+            "@type": "CreativeWork",
+            "name": "Data Scraper",
+            "dateCreated": "2025-01",
+            "description": "End-to-end scraper for a dynamic website, with Redis-distributed jobs and APIs hosted on AWS.",
+            "creator": {
+              "@id": "https://www.thisisdhruv.in/#person"
+            }
+          },
+          {
+            "@type": "CreativeWork",
+            "name": "Medicare",
+            "dateCreated": "2024-10",
+            "description": "End-to-end IoT product supporting senior citizens in their medical journey.",
+            "creator": {
+              "@id": "https://www.thisisdhruv.in/#person"
+            }
+          }
         ]
       }
       </script>

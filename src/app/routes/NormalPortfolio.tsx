@@ -32,6 +32,21 @@ const rotatingRoles = [
   "Professional Log Archaeologist",
 ];
 
+const SECTIONS = [
+  { id: "experience", label: "Experience" },
+  { id: "projects", label: "Projects" },
+  { id: "skills", label: "Skills" },
+  { id: "achievements", label: "Achievements" },
+  { id: "education", label: "Education" },
+];
+
+const HIGHLIGHTS = [
+  { value: "6×", label: "smaller production logs", color: "bg-[#FFC900]" },
+  { value: "20%+", label: "lower CPU usage", color: "bg-[#38BDF8]" },
+  { value: "SSO/SAML", label: "auth app built from scratch", color: "bg-[#FF90E8]" },
+  { value: "$3.5K", label: "ETH Global hackathon win", color: "bg-white" },
+];
+
 export function NormalPortfolio() {
   usePageMeta({
     title: "Dhruv Bhagatkar | Backend & DevOps Engineer — Resume",
@@ -45,7 +60,10 @@ export function NormalPortfolio() {
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Deep links like /normal#projects land on that section; everything else starts at the top
+    const target = window.location.hash && document.getElementById(window.location.hash.slice(1));
+    if (target) target.scrollIntoView();
+    else window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
@@ -91,7 +109,6 @@ export function NormalPortfolio() {
       "I am an Associate Consultant at Oracle Financial Services Software. I have strong exposure to DevOps practices, backend development, and production support for enterprise systems. Rather than calling myself an expert, I consider myself a continuous learner constantly exploring system design, building scalable architectures, and diving deep into backend engineering. My technical focus spans Oracle FCUBS and WebLogic, SSO/SAML authentication, Kubernetes, Jenkins CI/CD, and robust automation.",
     contact: {
       email: "bhagatkardhruv2003@gmail.com",
-      phone: "+91-9867229860",
       website: "https://www.thisisdhruv.in/",
       linkedin:
         "https://www.linkedin.com/in/dhruv-bhagatkar-1b267995",
@@ -151,7 +168,7 @@ export function NormalPortfolio() {
         ],
       },
       {
-        name: "Data Scrapper",
+        name: "Data Scraper",
         date: "January 2025",
         description:
           "An end-to-end data scraper for a website with dynamic content.",
@@ -248,11 +265,13 @@ export function NormalPortfolio() {
           stiffness: 300,
           damping: 30,
         }}
-        className="sticky top-0 z-50 bg-white border-b-4 border-black px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex justify-between items-center gap-4"
+        className="sticky top-0 z-50 bg-white border-b-4 border-black"
       >
+        <div className="px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex justify-between items-center gap-4">
         <div className="flex items-center gap-2 sm:gap-4 shrink">
           <Link
             to="/"
+            aria-label="Back to home"
             onClick={(e) => transitionClick(e, "/", "#FFC900", "back to base…")}
             className="bg-white border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all shrink-0"
           >
@@ -270,6 +289,32 @@ export function NormalPortfolio() {
           <Terminal className="w-4 h-4" />
           Terminal
         </Link>
+        </div>
+        <div className="border-t-2 border-black px-4 sm:px-6 lg:px-12 py-2 flex items-center gap-3">
+          <nav aria-label="Sections" className="flex-1 min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,#000_80%,transparent)] md:[mask-image:none]">
+            <ul className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+              {SECTIONS.map((section) => (
+                <li key={section.id}>
+                  <a
+                    href={`#${section.id}`}
+                    className="inline-block font-bold uppercase tracking-wider text-xs sm:text-sm px-2 py-1 border-2 border-transparent hover:border-black hover:bg-[#FFC900] focus-visible:border-black focus-visible:bg-[#FFC900] focus-visible:outline-none transition-colors"
+                  >
+                    {section.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <a
+            href="/Dhruv_Bhagatkar_Resume.pdf"
+            download
+            onClick={() => trackEvent("download_resume", { location: "header" })}
+            className="shrink-0 inline-flex items-center gap-1.5 font-black uppercase tracking-wider text-xs sm:text-sm bg-[#FFC900] px-2.5 sm:px-3 py-1 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+          >
+            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Resume<span className="hidden sm:inline"> PDF</span></span>
+          </a>
+        </div>
       </motion.header>
 
       <main className="max-w-6xl mx-auto px-6 lg:px-12 pt-16 space-y-24">
@@ -308,6 +353,24 @@ export function NormalPortfolio() {
                   {data.summary}
                 </p>
               </motion.div>
+
+              <motion.ul
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                aria-label="Highlights"
+                className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 max-w-2xl"
+              >
+                {HIGHLIGHTS.map((item) => (
+                  <li
+                    key={item.label}
+                    className={`${item.color} border-2 border-black px-3 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}
+                  >
+                    <span className="block font-black text-xl sm:text-2xl leading-none">{item.value}</span>
+                    <span className="block font-bold text-xs uppercase tracking-wide mt-1 leading-tight">{item.label}</span>
+                  </li>
+                ))}
+              </motion.ul>
 
               <div className="flex flex-wrap gap-3 mt-6">
                 <a
@@ -353,6 +416,9 @@ export function NormalPortfolio() {
                   <Download className="w-4 h-4 group-hover:block transition-all" /> Download Resume
                 </a>
               </div>
+              <p className="mt-5 text-xs font-bold uppercase tracking-widest text-black/60">
+                Last updated {__LAST_UPDATED__}
+              </p>
             </div>
 
             {/* Profile Image Section */}
@@ -386,7 +452,7 @@ export function NormalPortfolio() {
         </section>
 
         {/* Experience */}
-        <section>
+        <section id="experience" className="scroll-mt-36">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 bg-[#FFC900] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center rotate-3">
               <Briefcase className="w-6 h-6 text-black" />
@@ -469,7 +535,7 @@ export function NormalPortfolio() {
         </section>
 
         {/* Projects */}
-        <section>
+        <section id="projects" className="scroll-mt-36">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 bg-[#FF90E8] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center -rotate-6">
               <FolderGit2 className="w-6 h-6 text-black" />
@@ -518,7 +584,7 @@ export function NormalPortfolio() {
         </section>
 
         {/* Skills */}
-        <section>
+        <section id="skills" className="scroll-mt-36">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 bg-[#38BDF8] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center -rotate-3">
               <Cpu className="w-6 h-6 text-black" />
@@ -561,7 +627,7 @@ export function NormalPortfolio() {
         </section>
 
         {/* Achievements */}
-        <section>
+        <section id="achievements" className="scroll-mt-36">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 bg-[#FFC900] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center rotate-6">
               <Award className="w-6 h-6 text-black" />
@@ -608,7 +674,7 @@ export function NormalPortfolio() {
         </section>
 
         {/* Education */}
-        <section>
+        <section id="education" className="scroll-mt-36">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center -rotate-6">
               <GraduationCap className="w-6 h-6 text-black" />

@@ -9,7 +9,7 @@ import {
   useTransform,
   type PanInfo,
 } from 'motion/react';
-import { Terminal, LayoutDashboard, ArrowDown, MessageSquare, RotateCcw } from 'lucide-react';
+import { Terminal, LayoutDashboard, ArrowDown, MessageSquare, RotateCcw, Download, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router';
 import { trackEvent } from "../../utils/analytics";
 import { fireConfetti } from "../../utils/confetti";
@@ -393,7 +393,7 @@ export function Home() {
 
       {/* Main content */}
       <main className="flex-1 relative pb-32">
-        <section ref={heroRef} className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full min-h-[calc(100vh-140px)] flex flex-col justify-center items-center pt-8 pb-16">
+        <section ref={heroRef} className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full min-h-[calc(100vh-140px)] flex flex-col justify-center items-center pt-8 pb-28 sm:pb-40">
 
           {/* Deploy zone: drop the yellow circle here */}
           <div
@@ -568,6 +568,34 @@ export function Home() {
                 </span>
               )}
             </motion.h1>
+
+            {showAll && (
+              <motion.div
+                initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: reduceMotion ? 0 : 0.45 }}
+                className="pointer-events-auto mt-6 sm:mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+              >
+                <Link
+                  to={NAV.normal.to}
+                  onClick={(e) => {
+                    trackEvent('hero_cta', { cta: 'view_resume' });
+                    transitionClick(e, NAV.normal.to, NAV.normal.color, NAV.normal.label);
+                  }}
+                  className="inline-flex items-center gap-1.5 sm:gap-2 font-black uppercase tracking-wider text-xs sm:text-base bg-[#38BDF8] px-3 sm:px-5 py-2 sm:py-2.5 border-[3px] sm:border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
+                >
+                  View Resume <ArrowRight className="w-4 h-4" />
+                </Link>
+                <a
+                  href="/Dhruv_Bhagatkar_Resume.pdf"
+                  download
+                  onClick={() => trackEvent('download_resume', { location: 'home_hero' })}
+                  className="inline-flex items-center gap-1.5 sm:gap-2 font-black uppercase tracking-wider text-xs sm:text-base bg-white px-3 sm:px-5 py-2 sm:py-2.5 border-[3px] sm:border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
+                >
+                  <Download className="w-4 h-4" /> Download PDF
+                </a>
+              </motion.div>
+            )}
 
           </motion.div>
 
