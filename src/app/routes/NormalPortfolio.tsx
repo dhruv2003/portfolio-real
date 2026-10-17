@@ -88,7 +88,7 @@ export function NormalPortfolio() {
     name: "Dhruv Bhagatkar",
     title: "Associate Consultant, DevOps Engineer",
     summary:
-      "I am an Associate Consultant at Oracle Financial Services Software. I have strong exposure to DevOps practices, backend development, and production support for enterprise systems. Rather than calling myself an expert, I consider myself a continuous learner constantly exploring system design, building scalable architectures, and diving deep into backend engineering. My technical focus spans across Oracle technologies, Kubernetes, and robust automation.",
+      "I am an Associate Consultant at Oracle Financial Services Software. I have strong exposure to DevOps practices, backend development, and production support for enterprise systems. Rather than calling myself an expert, I consider myself a continuous learner constantly exploring system design, building scalable architectures, and diving deep into backend engineering. My technical focus spans Oracle FCUBS and WebLogic, SSO/SAML authentication, Kubernetes, Jenkins CI/CD, and robust automation.",
     contact: {
       email: "bhagatkardhruv2003@gmail.com",
       phone: "+91-9867229860",
@@ -277,22 +277,26 @@ export function NormalPortfolio() {
         <section className="relative">
           <div className="flex flex-col-reverse lg:flex-row lg:items-start items-center gap-8 lg:gap-12">
             <div className="flex-1 w-full">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="inline-block bg-[#FFC900] text-black font-black px-3 py-1.5 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-4 uppercase tracking-widest text-xs rotate-[-2deg]"
-              >
-                {data.title}
-              </motion.div>
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-5xl sm:text-6xl lg:text-7xl font-black uppercase text-black mb-6 leading-[0.9] tracking-tighter break-words"
-              >
-                <span className="block">Dhruv</span>
-                <span className="block">Bhagatkar</span>
-              </motion.h1>
+              {/* Name first in the DOM so the h1 reads "Dhruv Bhagatkar, <role>"; the role badge still sits on top visually */}
+              <h1 className="flex flex-col-reverse mb-6">
+                <motion.span
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="block text-5xl sm:text-6xl lg:text-7xl font-black uppercase text-black leading-[0.9] tracking-tighter break-words"
+                >
+                  <span className="block">Dhruv</span>{" "}
+                  <span className="block">Bhagatkar</span>
+                </motion.span>
+                <span className="sr-only">, </span>
+                <motion.span
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="self-start inline-block bg-[#FFC900] text-black font-black px-3 py-1.5 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-4 uppercase tracking-widest text-xs rotate-[-2deg]"
+                >
+                  {data.title}
+                </motion.span>
+              </h1>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -365,8 +369,11 @@ export function NormalPortfolio() {
               {/* Actual Image Container */}
               <div tabIndex={0} className="absolute inset-0 bg-white border-4 border-black overflow-hidden group cursor-pointer focus:outline-none">
                 <ImageWithFallback
-                  src="/profile.jpeg"
+                  src="/profile.webp"
                   alt="Dhruv Bhagatkar"
+                  width={640}
+                  height={853}
+                  decoding="async"
                   className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 group-active:grayscale-0 transition-all duration-500 scale-105 group-hover:scale-100 group-active:scale-100 group-focus:grayscale-0 group-focus:scale-100"
                 />
               </div>

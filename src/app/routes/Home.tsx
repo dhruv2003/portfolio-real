@@ -526,6 +526,8 @@ export function Home() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase text-black leading-[0.85] tracking-tighter flex flex-col items-center"
             >
+              {/* The visible headline is a typewriter animation; give crawlers and screen readers a stable name + role */}
+              <span className="sr-only">Dhruv Bhagatkar, Backend and Infrastructure Engineer</span>
               {showAll ? (
                 <>
                   <motion.span
@@ -537,6 +539,7 @@ export function Home() {
                     <WiggleWord text="Backend" reduceMotion={reduceMotion} className="pointer-events-auto hover:text-[#38BDF8] focus:text-[#38BDF8] transition-colors" />
                   </motion.span>
                   <motion.span
+                    aria-hidden="true"
                     initial={reduceMotion ? false : { opacity: 0, y: -160 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 600, damping: 18, delay: 0.14 }}
@@ -555,7 +558,7 @@ export function Home() {
                   </motion.span>
                 </>
               ) : (
-                <span className="text-5xl sm:text-7xl lg:text-8xl">
+                <span aria-hidden="true" className="text-5xl sm:text-7xl lg:text-8xl">
                   {typedText}
                   <motion.span
                     animate={{ opacity: [1, 0] }}
