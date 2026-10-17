@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const SITE = "https://thisisdhruv.in";
+const SITE = "https://www.thisisdhruv.in";
 
 function setMeta(selector: string, create: () => HTMLElement, attr: string, value: string) {
   let el = document.head.querySelector<HTMLElement>(selector);
@@ -38,7 +38,7 @@ export function usePageMeta({
       const l = document.createElement("link");
       l.rel = "canonical";
       return l;
-    }, "href", `${SITE}${path === "/" ? "" : path}`);
+    }, "href", `${SITE}${path}`);
 
     setMeta('meta[name="robots"]', () => {
       const m = document.createElement("meta");

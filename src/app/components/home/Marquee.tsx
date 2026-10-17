@@ -54,14 +54,15 @@ export function Marquee({ words, onWord, reduceMotion }: MarqueeProps) {
           >
             {word}
           </motion.button>
-          <span className="text-[#FFC900]">///</span>
+          <span aria-hidden="true" className="text-[#FFC900]">///</span>
         </div>
       ))}
     </div>
   );
 
   return (
-    <div
+    <section
+      aria-label="Ticker"
       className="relative z-10 mt-[80px] bg-black text-white border-b-4 border-black overflow-hidden flex whitespace-nowrap py-4"
       onPointerEnter={(e) => e.pointerType === 'mouse' && hoverTarget.set(0.15)}
       onPointerLeave={() => hoverTarget.set(1)}
@@ -70,6 +71,6 @@ export function Marquee({ words, onWord, reduceMotion }: MarqueeProps) {
         {copy(false)}
         {copy(true)}
       </motion.div>
-    </div>
+    </section>
   );
 }

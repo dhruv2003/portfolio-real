@@ -99,28 +99,29 @@ export function ChatFullPage() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#FFFDF9] text-black font-sans selection:bg-[#FFC900] selection:text-black overflow-hidden">
-      <div className="bg-[#FFC900] border-b-4 border-black px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shrink-0 z-10">
+      <header className="bg-[#FFC900] border-b-4 border-black px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-3 sm:gap-6">
           <Link
             to="/"
+            aria-label="Back to home"
             onClick={(e) => transitionClick(e, "/", "#FFC900", "back to base…")}
             className="bg-white border-2 border-black p-1.5 sm:p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all group shrink-0"
           >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-black group-hover:-translate-x-1 transition-transform" />
           </Link>
-          <h2 className="font-black text-lg sm:text-2xl uppercase tracking-wider sm:tracking-widest drop-shadow-[1px_1px_0px_rgba(0,0,0,1)] sm:drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] text-white truncate">
+          <h1 className="font-black text-lg sm:text-2xl uppercase tracking-wider sm:tracking-widest drop-shadow-[1px_1px_0px_rgba(0,0,0,1)] sm:drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] text-white truncate">
             Chat_Terminal //
-          </h2>
+          </h1>
         </div>
-        <div className="hidden sm:flex gap-3 shrink-0">
+        <div aria-hidden="true" className="hidden sm:flex gap-3 shrink-0">
           <div className="w-5 h-5 rounded-full border-2 border-black bg-[#FF90E8] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" />
           <div className="w-5 h-5 rounded-full border-2 border-black bg-[#38BDF8] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" />
           <div className="w-5 h-5 rounded-full border-2 border-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" />
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-12 space-y-6 sm:space-y-8 bg-[#FFFDF9]">
-        <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-12 space-y-6 sm:space-y-8 bg-[#FFFDF9]">
+        <div role="log" aria-live="polite" aria-label="Conversation" className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
           <AnimatePresence>
             {messages.map((message) => (
               <motion.div
@@ -200,9 +201,9 @@ export function ChatFullPage() {
 
           <div ref={messagesEndRef} className="h-8" />
         </div>
-      </div>
+      </main>
 
-      <div className="border-t-4 border-black p-3 sm:p-8 bg-[#E5E5E5] shrink-0 z-10">
+      <footer className="border-t-4 border-black p-3 sm:p-8 bg-[#E5E5E5] shrink-0 z-10">
         <div className="max-w-4xl mx-auto flex gap-2 sm:gap-6">
           <input
             type="text"
@@ -211,17 +212,19 @@ export function ChatFullPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask me something..."
+            aria-label="Ask a question"
             className="flex-1 min-w-0 bg-white border-4 border-black px-4 py-3 sm:px-6 sm:py-5 text-black font-bold text-base sm:text-xl placeholder:text-neutral-500 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-shadow"
           />
           <button
             onClick={handleSend}
+            aria-label="Send"
             disabled={!input.trim() || isTyping}
             className="bg-[#FF90E8] px-5 sm:px-12 border-4 border-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] sm:active:translate-x-[6px] sm:active:translate-y-[6px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:disabled:hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center group shrink-0"
           >
             <Send className="w-6 h-6 sm:w-8 sm:h-8 group-hover:rotate-12 transition-transform" />
           </button>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

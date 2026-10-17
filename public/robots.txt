@@ -3,4 +3,4 @@ Allow: /
 Disallow: /chat
 Disallow: /terminal
 
-Sitemap: https://thisisdhruv.in/sitemap.xml
+Sitemap: https://www.thisisdhruv.in/sitemap.xml

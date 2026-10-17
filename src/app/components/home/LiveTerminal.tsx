@@ -79,7 +79,7 @@ export const LiveTerminal = forwardRef<LiveTerminalHandle, LiveTerminalProps>(fu
   useImperativeHandle(ref, () => ({ push }), [push]);
 
   // Narrate hacker mode switching on and off
-  const hackerActive = useSyncExternalStore(subscribeHackerMode, () => getHackerMode().active);
+  const hackerActive = useSyncExternalStore(subscribeHackerMode, () => getHackerMode().active, () => false);
   const wasHacker = useRef(hackerActive);
   useEffect(() => {
     if (hackerActive === wasHacker.current) return;

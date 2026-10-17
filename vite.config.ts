@@ -18,6 +18,13 @@ export default defineConfig({
     },
   },
 
+  define: {
+    // Shown as "Last updated" on /normal; every deploy is a rebuild, so build time is the update time
+    __LAST_UPDATED__: JSON.stringify(
+      new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' })
+    ),
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
